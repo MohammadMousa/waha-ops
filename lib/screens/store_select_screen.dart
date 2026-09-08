@@ -106,6 +106,11 @@ class _StoreSelectScreenState extends State<StoreSelectScreen> {
             )
           : Column(
               children: [
+                // The employee is already looking at the store list below,
+                // so there's no "back to stores" to navigate to — just the
+                // message and the one real alternative action (switch
+                // accounts). Dismissing the banner is implicit in tapping
+                // another store.
                 if (_error != null)
                   Container(
                     width: double.infinity,
@@ -115,27 +120,20 @@ class _StoreSelectScreenState extends State<StoreSelectScreen> {
                       color: Colors.red.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_error!, style: const TextStyle(color: Colors.red)),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => setState(() => _error = null),
-                                child: const Text('Back to Stores'),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _logout,
-                                child: const Text('Log out'),
-                              ),
-                            ),
-                          ],
+                        Expanded(
+                          child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(onPressed: _logout, child: const Text('Log out')),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 18),
+                          onPressed: () => setState(() => _error = null),
+                          tooltip: 'Dismiss',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
                       ],
                     ),

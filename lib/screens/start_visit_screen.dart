@@ -30,7 +30,7 @@ class StartVisitScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final visit = context.watch<VisitState>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Waha Ops')),
+      appBar: AppBar(title: const Text('Waha Operations')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

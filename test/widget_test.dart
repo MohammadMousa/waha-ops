@@ -8,6 +8,6 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const WahaOpsApp());
     await tester.pumpAndSettle();
-    expect(find.text('Waha Ops'), findsOneWidget);
+    expect(find.text('Waha Operations'), findsOneWidget);
   });
 }

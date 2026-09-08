@@ -28,7 +28,7 @@ class WahaOpsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => VisitState()),
       ],
       child: MaterialApp(
-        title: 'Waha Ops',
+        title: 'Waha Operations',
         theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo)),
         home: const _StartupGate(),
         onGenerateRoute: (settings) {

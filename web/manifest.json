@@ -1,11 +1,11 @@
 {
-    "name": "waha_ops",
-    "short_name": "waha_ops",
+    "name": "Waha Operations",
+    "short_name": "Waha Operations",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Waha Ops — employee inventory visit workflow (Transfer/Return)",
+    "description": "Waha Operations — employee inventory visit workflow (Transfer/Return)",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
