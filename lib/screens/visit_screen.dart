@@ -88,6 +88,11 @@ class VisitScreen extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 72,
+        // Material 3's AppBar defaults to a pale surface color, not
+        // colorScheme.primary — set explicitly, since the branch/operation
+        // selectors below assume a dark background behind their white text.
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,

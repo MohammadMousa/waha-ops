@@ -65,6 +65,16 @@ class AuthState extends ChangeNotifier {
     return true;
   }
 
+  // Undoes a store selection without logging out — used when the chosen
+  // store turns out to grant no inventory permission, so the employee can
+  // pick a different branch on the same account (see StoreSelectScreen's
+  // "Back to Stores" recovery).
+  void clearStoreSelection() {
+    storeId = null;
+    permissions = {};
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     token = null;
     employeeId = null;

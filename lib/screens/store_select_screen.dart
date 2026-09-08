@@ -50,9 +50,10 @@ class _StoreSelectScreenState extends State<StoreSelectScreen> {
     try {
       await auth.selectStore(api, store.id);
       if (!auth.hasPermission(_kProcessInventoryPermission)) {
-        await auth.logout();
+        auth.clearStoreSelection();
         if (!mounted) return;
-        setState(() => _error = 'This account is not authorized for inventory operations.');
+        setState(() =>
+            _error = 'No inventory access at ${store.label}. Pick a different branch, or log out to switch accounts.');
         return;
       }
       final loaded = await visit.loadDestinationBranches(api, auth.token!, auth.storeId!);
@@ -106,9 +107,38 @@ class _StoreSelectScreenState extends State<StoreSelectScreen> {
           : Column(
               children: [
                 if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(_error!, style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => setState(() => _error = null),
+                                child: const Text('Back to Stores'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _logout,
+                                child: const Text('Log out'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 Expanded(
                   child: ListView.separated(
