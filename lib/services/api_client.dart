@@ -1,0 +1,169 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+import '../config/app_config.dart';
+import '../models/branch.dart';
+import '../models/employee_session.dart';
+import '../models/product_lite.dart';
+import '../models/visit_operation.dart';
+import 'api_exceptions.dart';
+
+// Visit metadata returned by POST /api/inventory/visits.
+class VisitStart {
+  final int id;
+  final int storeId;
+  final String storeName;
+  const VisitStart({required this.id, required this.storeId, required this.storeName});
+}
+
+class ApiClient {
+  final http.Client _http;
+  ApiClient({http.Client? httpClient}) : _http = httpClient ?? http.Client();
+
+  Uri _uri(String path) => Uri.parse('${AppConfig.apiBaseUrl}$path');
+
+  Map<String, String> _headers({String? token}) => {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+  String _extractMessage(http.Response resp) {
+    try {
+      final body = jsonDecode(resp.body) as Map<String, dynamic>;
+      return (body['message'] ?? body['error']) as String? ??
+          'Request failed (${resp.statusCode})';
+    } catch (_) {
+      return 'Request failed (${resp.statusCode})';
+    }
+  }
+
+  Future<http.Response> _send(Future<http.Response> Function() request) async {
+    try {
+      return await request();
+    } catch (e) {
+      throw NetworkException(e);
+    }
+  }
+
+  T _okOrThrow<T>(http.Response resp, T Function(dynamic body) onOk) {
+    if (resp.statusCode == 200) return onOk(resp.body.isEmpty ? null : jsonDecode(resp.body));
+    final msg = _extractMessage(resp);
+    if (resp.statusCode == 401 || resp.statusCode == 403) {
+      throw UnauthorizedException(resp.statusCode, msg);
+    }
+    throw UnknownApiException(resp.statusCode, msg);
+  }
+
+  // ---- Auth ----------------------------------------------------------
+
+  // POST /api/pos/auth/login  { username, pinCode }
+  Future<EmployeeSession> login(String username, String pinCode) async {
+    final resp = await _send(
+      () => _http.post(
+        _uri('/api/pos/auth/login'),
+        headers: _headers(),
+        body: jsonEncode({'username': username, 'pinCode': pinCode}),
+      ),
+    );
+    return _okOrThrow(resp, (body) => EmployeeSession.fromJson(body as Map<String, dynamic>));
+  }
+
+  // ---- Products (existing endpoint, reused as-is) ---------------------
+
+  // GET /api/products/search?q=&storeId=&page=&size=
+  Future<List<ProductLite>> searchProducts({
+    required String token,
+    required int storeId,
+    required String q,
+    int page = 0,
+    int size = 30,
+  }) async {
+    final resp = await _send(
+      () => _http.get(
+        _uri('/api/products/search').replace(queryParameters: {
+          'q': q,
+          'storeId': '$storeId',
+          'page': '$page',
+          'size': '$size',
+        }),
+        headers: _headers(token: token),
+      ),
+    );
+    return _okOrThrow(resp, (body) {
+      final map = body as Map<String, dynamic>;
+      final items = (map['items'] ?? map['content'] ?? const []) as List<dynamic>;
+      return items.map((e) => ProductLite.fromJson(e as Map<String, dynamic>)).toList();
+    });
+  }
+
+  // ---- Inventory visits -----------------------------------------------
+  // Contract per ~/git/to_Frontend_AI_On_Inventory_Task.
+
+  // GET /api/inventory/branches — all active stores in the employee's org.
+  Future<List<Branch>> getBranches(String token) async {
+    final resp = await _send(
+      () => _http.get(_uri('/api/inventory/branches'), headers: _headers(token: token)),
+    );
+    return _okOrThrow(resp, (body) {
+      final list = body as List<dynamic>;
+      return list.map((e) => Branch.fromJson(e as Map<String, dynamic>)).toList();
+    });
+  }
+
+  // POST /api/inventory/visits — no body; origin store comes from session.
+  Future<VisitStart> startVisit(String token) async {
+    final resp = await _send(
+      () => _http.post(_uri('/api/inventory/visits'), headers: _headers(token: token)),
+    );
+    return _okOrThrow(resp, (body) {
+      final map = body as Map<String, dynamic>;
+      return VisitStart(
+        id: (map['id'] as num).toInt(),
+        storeId: (map['storeId'] as num).toInt(),
+        storeName: map['storeName'] as String? ?? '',
+      );
+    });
+  }
+
+  // POST /api/inventory/visits/{visitId}/operations
+  Future<int> addOperation({
+    required String token,
+    required int visitId,
+    required VisitOperation operation,
+  }) async {
+    final resp = await _send(
+      () => _http.post(
+        _uri('/api/inventory/visits/$visitId/operations'),
+        headers: _headers(token: token),
+        body: jsonEncode(operation.toRequestJson()),
+      ),
+    );
+    return _okOrThrow(resp, (body) => ((body as Map<String, dynamic>)['id'] as num).toInt());
+  }
+
+  // DELETE /api/inventory/visits/{visitId}/operations/{operationId}
+  Future<void> deleteOperation({
+    required String token,
+    required int visitId,
+    required int operationId,
+  }) async {
+    final resp = await _send(
+      () => _http.delete(
+        _uri('/api/inventory/visits/$visitId/operations/$operationId'),
+        headers: _headers(token: token),
+      ),
+    );
+    _okOrThrow(resp, (_) => null);
+  }
+
+  // POST /api/inventory/visits/{visitId}/complete
+  Future<void> completeVisit({required String token, required int visitId}) async {
+    final resp = await _send(
+      () => _http.post(
+        _uri('/api/inventory/visits/$visitId/complete'),
+        headers: _headers(token: token),
+      ),
+    );
+    _okOrThrow(resp, (_) => null);
+  }
+}
