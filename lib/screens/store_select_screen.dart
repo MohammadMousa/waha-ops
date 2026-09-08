@@ -47,6 +47,7 @@ class _StoreSelectScreenState extends State<StoreSelectScreen> {
       _error = null;
     });
     final l10n = AppLocalizations.of(context)!;
+    final lang = context.read<LocaleState>().locale.languageCode;
     final api = context.read<ApiClient>();
     final auth = context.read<AuthState>();
     final visit = context.read<VisitState>();
@@ -55,7 +56,7 @@ class _StoreSelectScreenState extends State<StoreSelectScreen> {
       if (!auth.hasPermission(_kProcessInventoryPermission)) {
         auth.clearStoreSelection();
         if (!mounted) return;
-        setState(() => _error = l10n.noInventoryAccessAt(store.label));
+        setState(() => _error = l10n.noInventoryAccessAt(store.label(lang)));
         return;
       }
       final loaded = await visit.loadDestinationBranches(api, auth.token!, auth.storeId!);
@@ -166,7 +167,7 @@ class _StoreSelectScreenState extends State<StoreSelectScreen> {
                       return Card(
                         child: ListTile(
                           leading: const Icon(Icons.storefront),
-                          title: Text(s.label),
+                          title: Text(s.label(locale.locale.languageCode)),
                           trailing: _busy
                               ? const SizedBox(
                                   height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))

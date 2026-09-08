@@ -9,6 +9,7 @@ import '../models/visit_operation.dart';
 import '../services/api_client.dart';
 import '../services/api_exceptions.dart';
 import '../state/auth_state.dart';
+import '../state/locale_state.dart';
 import '../state/visit_state.dart';
 import '../widgets/product_quantity_sheet.dart';
 import 'camera_scan_screen.dart';
@@ -147,6 +148,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
   }
 
   Future<void> _pickProduct(ProductLite product) async {
+    final lang = context.read<LocaleState>().locale.languageCode;
     final qty = await showProductQuantitySheet(
       context,
       product: product,
@@ -154,7 +156,8 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
     );
     if (qty == null) return;
     setState(() {
-      _staged.add(OperationItem(productId: product.id, productLabel: product.label(), quantity: qty));
+      _staged.add(
+          OperationItem(productId: product.id, productLabel: product.label(lang), quantity: qty));
       _searchResults = null;
       _search.clear();
     });
@@ -168,7 +171,8 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
     final visit = context.read<VisitState>();
     final api = context.read<ApiClient>();
     final auth = context.read<AuthState>();
-    final ok = await visit.addOperation(api, auth.token!, widget.type, List.of(_staged));
+    final lang = context.read<LocaleState>().locale.languageCode;
+    final ok = await visit.addOperation(api, auth.token!, widget.type, List.of(_staged), lang);
     if (!mounted) return;
     setState(() => _saving = false);
     if (ok) {
@@ -188,6 +192,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final lang = context.watch<LocaleState>().locale.languageCode;
     final base = _searchResults ?? _browseList;
     final displayed =
         _inStockOnly ? base.where((p) => (_stock?[p.id] ?? 0) > 0).toList() : base;
@@ -287,7 +292,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
                         itemBuilder: (context, i) {
                           final p = displayed[i];
                           return ListTile(
-                            title: Text(p.label()),
+                            title: Text(p.label(lang)),
                             subtitle: Text(p.barcode),
                             trailing: _stock?[p.id] != null ? Text('${_stock![p.id]}') : null,
                             onTap: () => _pickProduct(p),

@@ -47,9 +47,10 @@ class _VisitHomeScreenState extends State<VisitHomeScreen> {
 
   Future<void> _openOperation(OperationType type) async {
     final visit = context.read<VisitState>();
+    final lang = context.read<LocaleState>().locale.languageCode;
     var target = visit.targetBranch;
     if (visit.destinationBranches.length > 1) {
-      final picked = await showBranchPickerSheet(context, visit.destinationBranches);
+      final picked = await showBranchPickerSheet(context, visit.destinationBranches, lang);
       if (picked == null) return;
       visit.setTargetBranch(picked);
       target = picked;
@@ -59,7 +60,7 @@ class _VisitHomeScreenState extends State<VisitHomeScreen> {
       builder: (_) => AddOperationScreen(
         type: type,
         storeId: visit.originStoreId!,
-        targetLabel: target!.label,
+        targetLabel: target!.label(lang),
       ),
     ));
   }
@@ -155,8 +156,17 @@ class _VisitHomeScreenState extends State<VisitHomeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final visit = context.watch<VisitState>();
+    final auth = context.watch<AuthState>();
     final locale = context.watch<LocaleState>();
     final starting = visit.status != VisitStatus.active;
+    // Prefer the branch's real display name (from the employee's own
+    // accessible-stores list, fetched at login) over the visit-start
+    // response's raw `storeName` slug — same displayName gap as the
+    // destination-branch list, see to_Backend_AI_On_Inventory_Task.
+    final originLabel = auth.stores
+        .where((b) => b.id == visit.originStoreId)
+        .map((b) => b.label(locale.locale.languageCode))
+        .firstOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -166,7 +176,7 @@ class _VisitHomeScreenState extends State<VisitHomeScreen> {
         // assume a dark background behind their white/icon foreground.
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
-        title: Text(visit.originStoreName ?? l10n.appTitle),
+        title: Text(originLabel ?? visit.originStoreName ?? l10n.appTitle),
         actions: [
           TextButton(
             onPressed: () => locale.toggle(),

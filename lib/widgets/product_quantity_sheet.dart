@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../models/product_lite.dart';
+import '../state/locale_state.dart';
 
 // Shown after a product is identified (list tap, camera scan, or hardware
 // wedge-scan) — styled after the reference "Product Inventory" popup.
@@ -63,6 +65,7 @@ class _ProductQuantitySheetState extends State<ProductQuantitySheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final lang = context.watch<LocaleState>().locale.languageCode;
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -85,7 +88,7 @@ class _ProductQuantitySheetState extends State<ProductQuantitySheet> {
               ),
             ),
           ),
-          Text(widget.product.label(),
+          Text(widget.product.label(lang),
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           Text(widget.product.barcode, style: const TextStyle(color: Colors.black54, fontSize: 13)),
           const SizedBox(height: 12),

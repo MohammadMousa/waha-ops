@@ -81,6 +81,7 @@ class VisitState extends ChangeNotifier {
     String token,
     OperationType type,
     List<OperationItem> items,
+    String languageCode,
   ) async {
     if (visitId == null || targetBranch == null) return false;
     busy = true;
@@ -89,7 +90,7 @@ class VisitState extends ChangeNotifier {
     final draft = VisitOperation(
       type: type,
       targetStoreId: targetBranch!.id,
-      targetStoreLabel: targetBranch!.label,
+      targetStoreLabel: targetBranch!.label(languageCode),
       items: items,
     );
     try {
