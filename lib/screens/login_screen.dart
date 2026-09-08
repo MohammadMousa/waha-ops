@@ -5,12 +5,6 @@ import '../router/routes.dart';
 import '../services/api_client.dart';
 import '../services/api_exceptions.dart';
 import '../state/auth_state.dart';
-import '../state/visit_state.dart';
-
-// PROCESS_INVENTORY is the permission required to run the visit workflow —
-// granted to OPERATOR and BRANCH_ADMIN roles (not CASHIER, which only gets
-// VIEW_INVENTORY). See ~/git/to_Frontend_AI_On_Inventory_Task.
-const _kProcessInventoryPermission = 'PROCESS_INVENTORY';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,22 +30,13 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     final auth = context.read<AuthState>();
     final api = context.read<ApiClient>();
-    final visit = context.read<VisitState>();
     try {
       await auth.login(api, _username.text.trim(), _pin.text.trim());
-      if (!auth.hasPermission(_kProcessInventoryPermission)) {
-        await auth.logout();
-        if (!mounted) return;
-        setState(() => _error = 'This account is not authorized for inventory operations.');
-        return;
-      }
-      final loaded = await visit.loadDestinationBranches(api, auth.token!, auth.storeId!);
       if (!mounted) return;
-      if (!loaded) {
-        setState(() => _error = visit.error ?? 'Could not load branches');
-        return;
-      }
-      Navigator.of(context).pushReplacementNamed(Routes.startVisit);
+      // StoreSelectScreen handles all three cases: 0 stores (no access),
+      // 1 store (auto-selects), many (shows the picker) — see
+      // to_Frontend_AI_On_Inventory_Task [4]: the backend never picks one.
+      Navigator.of(context).pushReplacementNamed(Routes.storeSelect);
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {

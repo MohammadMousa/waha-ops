@@ -4,6 +4,7 @@ class LocalPrefs {
   static const _tokenKey = 'ops_employee_token';
   static const _usernameKey = 'ops_employee_username';
   static const _pinKey = 'ops_employee_pin';
+  static const _lastStoreIdKey = 'ops_last_store_id';
 
   static Future<void> setSession(String token, String username, String pin) async {
     final prefs = await SharedPreferences.getInstance();
@@ -12,11 +13,17 @@ class LocalPrefs {
     await prefs.setString(_pinKey, pin);
   }
 
+  static Future<void> setLastStoreId(int storeId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_lastStoreIdKey, storeId);
+  }
+
   static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_usernameKey);
     await prefs.remove(_pinKey);
+    await prefs.remove(_lastStoreIdKey);
   }
 
   static Future<String?> get token async =>
@@ -25,4 +32,6 @@ class LocalPrefs {
       (await SharedPreferences.getInstance()).getString(_usernameKey);
   static Future<String?> get pin async =>
       (await SharedPreferences.getInstance()).getString(_pinKey);
+  static Future<int?> get lastStoreId async =>
+      (await SharedPreferences.getInstance()).getInt(_lastStoreIdKey);
 }

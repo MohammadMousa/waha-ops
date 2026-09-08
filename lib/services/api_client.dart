@@ -68,6 +68,18 @@ class ApiClient {
     return _okOrThrow(resp, (body) => EmployeeSession.fromJson(body as Map<String, dynamic>));
   }
 
+  // POST /api/pos/auth/store  { storeId } — explicit store selection, no auto-pick.
+  Future<StoreSelection> selectStore(String token, int storeId) async {
+    final resp = await _send(
+      () => _http.post(
+        _uri('/api/pos/auth/store'),
+        headers: _headers(token: token),
+        body: jsonEncode({'storeId': storeId}),
+      ),
+    );
+    return _okOrThrow(resp, (body) => StoreSelection.fromJson(body as Map<String, dynamic>));
+  }
+
   // ---- Products (existing endpoint, reused as-is) ---------------------
 
   // GET /api/products/search?q=&storeId=&page=&size=

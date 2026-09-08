@@ -4,10 +4,13 @@ import 'package:provider/provider.dart';
 import 'router/routes.dart';
 import 'screens/login_screen.dart';
 import 'screens/start_visit_screen.dart';
+import 'screens/store_select_screen.dart';
 import 'screens/visit_screen.dart';
 import 'services/api_client.dart';
 import 'state/auth_state.dart';
 import 'state/visit_state.dart';
+
+const _kProcessInventoryPermission = 'PROCESS_INVENTORY';
 
 void main() {
   runApp(const WahaOpsApp());
@@ -32,6 +35,8 @@ class WahaOpsApp extends StatelessWidget {
           switch (settings.name) {
             case Routes.login:
               return MaterialPageRoute(builder: (_) => const LoginScreen());
+            case Routes.storeSelect:
+              return MaterialPageRoute(builder: (_) => const StoreSelectScreen());
             case Routes.startVisit:
               return MaterialPageRoute(builder: (_) => const StartVisitScreen());
             case Routes.visit:
@@ -45,7 +50,11 @@ class WahaOpsApp extends StatelessWidget {
   }
 }
 
-// Tries a cached employee session before showing the login screen.
+enum _StartupTarget { login, storeSelect, startVisit }
+
+// Tries a cached employee session (and, if a store was previously chosen
+// and is still accessible, re-selects it automatically) before showing
+// the login screen.
 class _StartupGate extends StatefulWidget {
   const _StartupGate();
 
@@ -55,7 +64,7 @@ class _StartupGate extends StatefulWidget {
 
 class _StartupGateState extends State<_StartupGate> {
   bool _resolved = false;
-  bool _loggedIn = false;
+  _StartupTarget _target = _StartupTarget.login;
 
   @override
   void initState() {
@@ -67,14 +76,26 @@ class _StartupGateState extends State<_StartupGate> {
     final auth = context.read<AuthState>();
     final api = context.read<ApiClient>();
     final visit = context.read<VisitState>();
-    final ok = await auth.resolveStartupAuth(api);
-    if (ok && auth.storeId != null) {
-      await visit.loadDestinationBranches(api, auth.token!, auth.storeId!);
+    final loggedIn = await auth.resolveStartupAuth(api);
+
+    var target = _StartupTarget.login;
+    if (loggedIn) {
+      if (auth.hasSelectedStore) {
+        if (!auth.hasPermission(_kProcessInventoryPermission)) {
+          await auth.logout();
+        } else {
+          await visit.loadDestinationBranches(api, auth.token!, auth.storeId!);
+          target = _StartupTarget.startVisit;
+        }
+      } else {
+        target = _StartupTarget.storeSelect;
+      }
     }
+
     if (mounted) {
       setState(() {
         _resolved = true;
-        _loggedIn = ok;
+        _target = target;
       });
     }
   }
@@ -84,6 +105,13 @@ class _StartupGateState extends State<_StartupGate> {
     if (!_resolved) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return _loggedIn ? const StartVisitScreen() : const LoginScreen();
+    switch (_target) {
+      case _StartupTarget.startVisit:
+        return const StartVisitScreen();
+      case _StartupTarget.storeSelect:
+        return const StoreSelectScreen();
+      case _StartupTarget.login:
+        return const LoginScreen();
+    }
   }
 }
