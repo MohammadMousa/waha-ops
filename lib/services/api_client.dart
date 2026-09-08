@@ -101,11 +101,37 @@ class ApiClient {
         headers: _headers(token: token),
       ),
     );
-    return _okOrThrow(resp, (body) {
-      final map = body as Map<String, dynamic>;
-      final items = (map['items'] ?? map['content'] ?? const []) as List<dynamic>;
-      return items.map((e) => ProductLite.fromJson(e as Map<String, dynamic>)).toList();
-    });
+    return _okOrThrow(resp, _parseProductList);
+  }
+
+  // GET /api/products?storeId=&page=&size= — default browsable listing
+  // (no query text required, unlike /search which 400s on an empty q).
+  Future<List<ProductLite>> getProducts({
+    required String token,
+    required int storeId,
+    int page = 0,
+    int size = 50,
+  }) async {
+    final resp = await _send(
+      () => _http.get(
+        _uri('/api/products').replace(queryParameters: {
+          'storeId': '$storeId',
+          'page': '$page',
+          'size': '$size',
+        }),
+        headers: _headers(token: token),
+      ),
+    );
+    return _okOrThrow(resp, _parseProductList);
+  }
+
+  List<ProductLite> _parseProductList(dynamic body) {
+    final map = body as Map<String, dynamic>;
+    // Real key is "products" (confirmed against the live response) — not
+    // "items"/"content" as originally assumed, which is why search/browse
+    // silently returned nothing.
+    final list = (map['products'] as List<dynamic>?) ?? const [];
+    return list.map((e) => ProductLite.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   // GET /api/products/barcode/{barcode}?storeId= — camera/hardware scan lookup.

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/generated/app_localizations.dart';
 import '../router/routes.dart';
 import '../services/api_client.dart';
 import '../services/api_exceptions.dart';
 import '../state/auth_state.dart';
+import '../state/locale_state.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,8 +22,9 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _error;
 
   Future<void> _login() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_username.text.trim().isEmpty || _pin.text.trim().isEmpty) {
-      setState(() => _error = 'Enter username and PIN');
+      setState(() => _error = l10n.enterUsernameAndPin);
       return;
     }
     setState(() {
@@ -40,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {
-      setState(() => _error = 'Could not reach the server');
+      setState(() => _error = l10n.couldNotReachServer);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -55,6 +58,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final locale = context.watch<LocaleState>();
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F8),
       body: Center(
@@ -68,23 +73,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Waha Operations',
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => locale.toggle(),
+                      child: Text(locale.locale.languageCode == 'ar' ? 'EN' : 'AR'),
+                    ),
+                  ),
+                  Text(l10n.appTitle,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  const Text('Inventory visits',
+                  Text(l10n.inventoryVisitsSubtitle,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54)),
+                      style: const TextStyle(color: Colors.black54)),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _username,
-                    decoration: const InputDecoration(labelText: 'Username'),
+                    decoration: InputDecoration(labelText: l10n.usernameLabel),
                     onSubmitted: (_) => _login(),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _pin,
-                    decoration: const InputDecoration(labelText: 'PIN'),
+                    decoration: InputDecoration(labelText: l10n.pinLabel),
                     obscureText: true,
                     keyboardType: TextInputType.number,
                     onSubmitted: (_) => _login(),
@@ -102,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Log in'),
+                        : Text(l10n.loginButton),
                   ),
                 ],
               ),

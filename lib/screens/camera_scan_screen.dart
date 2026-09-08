@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../l10n/generated/app_localizations.dart';
+
 // Pushed from the Add Operation screen's scan button, or triggered by a
 // hardware scanner acting as a keyboard wedge (handled in that screen's
 // search field instead — this is the camera path only). Pops with the
@@ -59,7 +61,7 @@ class _CameraScanScreenState extends State<CameraScanScreen> with WidgetsBinding
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Scan Barcode'),
+        title: Text(AppLocalizations.of(context)!.scanBarcode),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
@@ -75,14 +77,14 @@ class _CameraScanScreenState extends State<CameraScanScreen> with WidgetsBinding
               child: const SizedBox.expand(),
             ),
           ),
-          const Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: 48,
             child: Text(
-              'Align the barcode within the frame',
+              AppLocalizations.of(context)!.alignBarcode,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ),
         ],

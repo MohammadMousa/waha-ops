@@ -1,0 +1,61 @@
+{
+  "@@locale": "ar",
+
+  "appTitle": "عمليات واها",
+  "inventoryVisitsSubtitle": "زيارات المخزون",
+
+  "usernameLabel": "اسم المستخدم",
+  "pinLabel": "الرقم السري",
+  "loginButton": "تسجيل الدخول",
+  "enterUsernameAndPin": "أدخل اسم المستخدم والرقم السري",
+  "couldNotReachServer": "تعذر الوصول إلى الخادم",
+
+  "selectYourBranch": "اختر فرعك",
+  "noBranchAccessMessage": "لا يملك هذا الحساب صلاحية الوصول لأي فرع.",
+  "backToLogin": "العودة لتسجيل الدخول",
+  "logOut": "تسجيل الخروج",
+  "noInventoryAccessAt": "لا توجد صلاحية مخزون في {branch}. اختر فرعًا آخر، أو سجّل الخروج لتبديل الحساب.",
+  "@noInventoryAccessAt": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "dismiss": "إغلاق",
+
+  "changeBranch": "تغيير الفرع",
+  "endVisitFirstTitle": "أنهِ الزيارة أولاً",
+  "endVisitFirstBody": "لديك زيارة نشطة. أنهِها قبل تغيير الفرع.",
+  "cancel": "إلغاء",
+  "endVisitAndSwitch": "إنهاء الزيارة والتبديل",
+
+  "startingVisit": "جاري بدء الزيارة…",
+  "transferLabel": "تحويل",
+  "returnLabel": "إرجاع",
+  "cancelVisit": "إلغاء الزيارة",
+  "endVisit": "إنهاء الزيارة",
+  "cancelVisitConfirmTitle": "إلغاء هذه الزيارة؟",
+  "cancelVisitConfirmBody": "لن يتم حفظ ما تمت إضافته.",
+  "keepVisit": "الاحتفاظ بالزيارة",
+  "discardVisit": "تجاهل",
+  "visitSavedTitle": "تم حفظ الزيارة",
+  "visitSavedMessage": "تم تسجيل النشاط.",
+  "ok": "حسنًا",
+
+  "searchOrScanProduct": "ابحث أو امسح منتجًا",
+  "noMatches": "لا توجد نتائج",
+  "inStockOnly": "المتوفر فقط",
+  "branchStockLabel": "مخزون الفرع",
+  "quantityLabel": "الكمية",
+  "enterValidQuantity": "أدخل كمية صحيحة",
+  "selectAProduct": "اختر منتجًا",
+  "addButton": "إضافة",
+  "saveItemsCount": "حفظ {count} عنصر",
+  "@saveItemsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "itemsAddedCount": "تمت إضافة {count} عنصر",
+  "@itemsAddedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "scanBarcode": "مسح الباركود",
+  "alignBarcode": "ضع الباركود داخل الإطار"
+}

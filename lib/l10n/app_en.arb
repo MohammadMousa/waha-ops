@@ -1,0 +1,61 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Waha Operations",
+  "inventoryVisitsSubtitle": "Inventory visits",
+
+  "usernameLabel": "Username",
+  "pinLabel": "PIN",
+  "loginButton": "Log in",
+  "enterUsernameAndPin": "Enter username and PIN",
+  "couldNotReachServer": "Could not reach the server",
+
+  "selectYourBranch": "Select Your Branch",
+  "noBranchAccessMessage": "This account has no branch access.",
+  "backToLogin": "Back to login",
+  "logOut": "Log out",
+  "noInventoryAccessAt": "No inventory access at {branch}. Pick a different branch, or log out to switch accounts.",
+  "@noInventoryAccessAt": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "dismiss": "Dismiss",
+
+  "changeBranch": "Change Branch",
+  "endVisitFirstTitle": "End visit first",
+  "endVisitFirstBody": "You have an active visit. End it before switching branches.",
+  "cancel": "Cancel",
+  "endVisitAndSwitch": "End Visit & Switch",
+
+  "startingVisit": "Starting visit…",
+  "transferLabel": "Transfer",
+  "returnLabel": "Return",
+  "cancelVisit": "Cancel Visit",
+  "endVisit": "End Visit",
+  "cancelVisitConfirmTitle": "Cancel this visit?",
+  "cancelVisitConfirmBody": "Anything added won't be saved.",
+  "keepVisit": "Keep Visit",
+  "discardVisit": "Discard",
+  "visitSavedTitle": "Visit saved",
+  "visitSavedMessage": "The activity has been recorded.",
+  "ok": "OK",
+
+  "searchOrScanProduct": "Search or scan a product",
+  "noMatches": "No matches",
+  "inStockOnly": "In stock only",
+  "branchStockLabel": "Branch Stock",
+  "quantityLabel": "Quantity",
+  "enterValidQuantity": "Enter a valid quantity",
+  "selectAProduct": "Select a product",
+  "addButton": "Add",
+  "saveItemsCount": "Save {count} item(s)",
+  "@saveItemsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "itemsAddedCount": "{count} item(s) added",
+  "@itemsAddedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "scanBarcode": "Scan Barcode",
+  "alignBarcode": "Align the barcode within the frame"
+}

@@ -8,10 +8,18 @@ enum VisitStatus { none, active, completed }
 
 // Holds the destination-branch picker, the active visit, and its operations.
 // The visit's origin store is fixed by the employee's session (set at
-// login) — this state never lets the employee change it. "Branch" in the
-// header refers to the destination/target branch for the operation being
-// composed (roadmap section 24/33), which can change freely mid-visit
-// without resetting the visit or its already-added operations.
+// login) — this state never lets the employee change it. `targetBranch` is
+// the destination for the Transfer/Return being composed — picked via
+// BranchPickerSheet before opening AddOperationScreen, sticky across adds
+// until changed.
+//
+// reset() doubles as "cancel visit": per the human lead, cancelling is a
+// pure local undo — never call completeVisit for it. Anything already
+// POSTed to the backend as an operation stays there (the visit row is
+// simply abandoned, ACTIVE-but-never-completed), but since store_inventory
+// is only mutated inside /complete, an abandoned visit has zero effect on
+// real stock. Don't try to "clean up" by deleting those operations or
+// completing empty — just stop touching this visit and reset local state.
 class VisitState extends ChangeNotifier {
   List<Branch> destinationBranches = [];
   Branch? targetBranch;
@@ -20,7 +28,6 @@ class VisitState extends ChangeNotifier {
   int? originStoreId;
   String? originStoreName;
   VisitStatus status = VisitStatus.none;
-  OperationType operationType = OperationType.transfer;
   final List<VisitOperation> operations = [];
   bool busy = false;
   String? error;
@@ -62,11 +69,6 @@ class VisitState extends ChangeNotifier {
       busy = false;
       notifyListeners();
     }
-  }
-
-  void setOperationType(OperationType type) {
-    operationType = type;
-    notifyListeners();
   }
 
   void setTargetBranch(Branch branch) {
@@ -145,7 +147,6 @@ class VisitState extends ChangeNotifier {
     originStoreId = null;
     originStoreName = null;
     status = VisitStatus.none;
-    operationType = OperationType.transfer;
     operations.clear();
     error = null;
     notifyListeners();

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/generated/app_localizations.dart';
 import '../models/product_lite.dart';
 import '../models/visit_operation.dart';
 import '../services/api_client.dart';
@@ -12,13 +13,15 @@ import '../state/visit_state.dart';
 import '../widgets/product_quantity_sheet.dart';
 import 'camera_scan_screen.dart';
 
-// Full-screen product list (search + scan), matching the Products-screen
-// convention: search field with a scan button beside it. Each identified
-// product (list tap, camera scan, or hardware wedge-scan via the search
-// field's submit) opens the quantity popup, then queues onto a staging
-// list. "Save" submits every staged item as ONE operation call — the
-// backend's items array already supports multiple products per operation
-// (see docs/inventory.md), so one scan session -> one API call.
+// Full-screen product list (browse + search + filter + scan), matching the
+// Products-screen convention. Shows a default browsable list of every
+// product on load (GET /api/products) — search (GET /api/products/search)
+// only replaces that list once the employee types something; it never
+// starts empty. Each identified product (list tap, camera scan, or
+// hardware wedge-scan via the search field's submit) opens the quantity
+// popup, then queues onto a staging list. "Save" submits every staged
+// item as ONE operation call — the backend's items array already supports
+// multiple products per operation (see docs/inventory.md).
 class AddOperationScreen extends StatefulWidget {
   final OperationType type;
   final int storeId; // origin store — product search/stock scope
@@ -38,8 +41,11 @@ class AddOperationScreen extends StatefulWidget {
 class _AddOperationScreenState extends State<AddOperationScreen> {
   final _search = TextEditingController();
   Timer? _debounce;
-  List<ProductLite> _results = [];
+  List<ProductLite> _browseList = [];
+  List<ProductLite>? _searchResults; // null = no active query, show browse list
+  bool _loadingBrowse = true;
   bool _searching = false;
+  bool _inStockOnly = false;
   Map<int, int>? _stock; // productId -> quantity; null while unavailable
   final List<OperationItem> _staged = [];
   bool _saving = false;
@@ -48,6 +54,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
   void initState() {
     super.initState();
     _loadStock();
+    _loadBrowseList();
   }
 
   Future<void> _loadStock() async {
@@ -58,14 +65,28 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
       if (mounted) setState(() => _stock = stock);
     } catch (_) {
       // Backend endpoint may not be deployed yet — Branch Stock just shows
-      // "—" in the popup instead of blocking the scan/search flow.
+      // "—" in the popup instead of blocking the browse/search/scan flow.
+    }
+  }
+
+  Future<void> _loadBrowseList() async {
+    final api = context.read<ApiClient>();
+    final auth = context.read<AuthState>();
+    setState(() => _loadingBrowse = true);
+    try {
+      final products = await api.getProducts(token: auth.token!, storeId: widget.storeId);
+      if (mounted) setState(() => _browseList = products);
+    } catch (_) {
+      if (mounted) setState(() => _browseList = []);
+    } finally {
+      if (mounted) setState(() => _loadingBrowse = false);
     }
   }
 
   void _onSearchChanged(String q) {
     _debounce?.cancel();
     if (q.trim().isEmpty) {
-      setState(() => _results = []);
+      setState(() => _searchResults = null);
       return;
     }
     _debounce = Timer(const Duration(milliseconds: 350), () => _runSearch(q.trim()));
@@ -77,9 +98,9 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
     setState(() => _searching = true);
     try {
       final results = await api.searchProducts(token: auth.token!, storeId: widget.storeId, q: q);
-      if (mounted) setState(() => _results = results);
+      if (mounted) setState(() => _searchResults = results);
     } catch (_) {
-      if (mounted) setState(() => _results = []);
+      if (mounted) setState(() => _searchResults = []);
     } finally {
       if (mounted) setState(() => _searching = false);
     }
@@ -134,7 +155,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
     if (qty == null) return;
     setState(() {
       _staged.add(OperationItem(productId: product.id, productLabel: product.label(), quantity: qty));
-      _results = [];
+      _searchResults = null;
       _search.clear();
     });
   }
@@ -166,8 +187,17 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final base = _searchResults ?? _browseList;
+    final displayed =
+        _inStockOnly ? base.where((p) => (_stock?[p.id] ?? 0) > 0).toList() : base;
+
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.type.label} → ${widget.targetLabel}')),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        title: Text('${widget.type.label(l10n)} → ${widget.targetLabel}'),
+      ),
       body: Column(
         children: [
           Padding(
@@ -178,7 +208,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
                   child: TextField(
                     controller: _search,
                     decoration: InputDecoration(
-                      hintText: 'Search or scan a product',
+                      hintText: l10n.searchOrScanProduct,
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: _searching
                           ? const Padding(
@@ -193,6 +223,12 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                IconButton.filled(
+                  icon: Icon(_inStockOnly ? Icons.filter_alt : Icons.filter_alt_outlined),
+                  tooltip: l10n.inStockOnly,
+                  onPressed: () => setState(() => _inStockOnly = !_inStockOnly),
+                ),
+                const SizedBox(width: 8),
                 Container(
                   height: 48,
                   width: 48,
@@ -202,7 +238,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-                    tooltip: 'Scan with camera',
+                    tooltip: l10n.scanBarcode,
                     onPressed: _scanWithCamera,
                   ),
                 ),
@@ -220,7 +256,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${_staged.length} item(s) added',
+                  Text(l10n.itemsAddedCount(_staged.length),
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                   ..._staged.asMap().entries.map((e) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2),
@@ -240,25 +276,24 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
               ),
             ),
           Expanded(
-            child: _results.isEmpty
-                ? Center(
-                    child: Text(
-                      _search.text.isEmpty ? 'Search or scan to find a product' : 'No matches',
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: _results.length,
-                    itemBuilder: (context, i) {
-                      final p = _results[i];
-                      return ListTile(
-                        title: Text(p.label()),
-                        subtitle: Text(p.barcode),
-                        trailing: _stock?[p.id] != null ? Text('${_stock![p.id]} in stock') : null,
-                        onTap: () => _pickProduct(p),
-                      );
-                    },
-                  ),
+            child: _loadingBrowse && displayed.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : displayed.isEmpty
+                    ? Center(
+                        child: Text(l10n.noMatches, style: const TextStyle(color: Colors.black54)),
+                      )
+                    : ListView.builder(
+                        itemCount: displayed.length,
+                        itemBuilder: (context, i) {
+                          final p = displayed[i];
+                          return ListTile(
+                            title: Text(p.label()),
+                            subtitle: Text(p.barcode),
+                            trailing: _stock?[p.id] != null ? Text('${_stock![p.id]}') : null,
+                            onTap: () => _pickProduct(p),
+                          );
+                        },
+                      ),
           ),
         ],
       ),
@@ -269,7 +304,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
             onPressed: (_staged.isEmpty || _saving) ? null : _save,
             child: _saving
                 ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text('Save ${_staged.length} item(s)'),
+                : Text(l10n.saveItemsCount(_staged.length)),
           ),
         ),
       ),

@@ -1,8 +1,14 @@
+import '../l10n/generated/app_localizations.dart';
+
 enum OperationType { transfer, ret }
 
 extension OperationTypeApi on OperationType {
   String get apiValue => this == OperationType.transfer ? 'TRANSFER' : 'RETURN';
-  String get label => this == OperationType.transfer ? 'Transfer' : 'Return';
+
+  // Return/Transfer are identical flows — only the label differs (per the
+  // human lead: "return is just like transfer only titles changes").
+  String label(AppLocalizations l10n) =>
+      this == OperationType.transfer ? l10n.transferLabel : l10n.returnLabel;
 }
 
 class OperationItem {
