@@ -14,6 +14,17 @@ class UnauthorizedException extends ApiException {
   const UnauthorizedException(super.statusCode, super.message);
 }
 
+/// 404 on GET /api/products/barcode/{barcode} — unrecognized barcode.
+class ProductNotFoundException extends ApiException {
+  const ProductNotFoundException(super.statusCode, super.message);
+}
+
+/// 409 on GET /api/products/barcode/{barcode} — product exists but isn't
+/// currently sellable/active.
+class ProductNotSellableException extends ApiException {
+  const ProductNotSellableException(super.statusCode, super.message);
+}
+
 /// Any other non-2xx we didn't specifically anticipate.
 class UnknownApiException extends ApiException {
   const UnknownApiException(super.statusCode, super.message);

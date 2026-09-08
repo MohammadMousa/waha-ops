@@ -7,7 +7,7 @@ import '../router/routes.dart';
 import '../services/api_client.dart';
 import '../state/auth_state.dart';
 import '../state/visit_state.dart';
-import '../widgets/add_operation_dialog.dart';
+import 'add_operation_screen.dart';
 
 // Roadmap section 33 — the source-of-truth layout:
 //   Header: [ Branch ▼ (destination) ]  [ Transfer ▼ ]
@@ -18,24 +18,21 @@ class VisitScreen extends StatelessWidget {
 
   Future<void> _addOperation(BuildContext context) async {
     final visit = context.read<VisitState>();
-    final api = context.read<ApiClient>();
-    final auth = context.read<AuthState>();
     if (visit.targetBranch == null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Select a branch first')));
       return;
     }
-    final items = await showAddOperationDialog(
-      context,
-      storeId: visit.originStoreId!,
-      targetLabel: visit.targetBranch!.label,
-    );
-    if (items == null) return;
-    final ok = await visit.addOperation(api, auth.token!, visit.operationType, items);
-    if (!context.mounted) return;
-    if (!ok && visit.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(visit.error!)));
-    }
+    // AddOperationScreen performs the addOperation() call itself (it needs
+    // the visit provider to submit the whole staged batch at once) — this
+    // just needs to push it.
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => AddOperationScreen(
+        type: visit.operationType,
+        storeId: visit.originStoreId!,
+        targetLabel: visit.targetBranch!.label,
+      ),
+    ));
   }
 
   Future<void> _removeOperation(BuildContext context, int index) async {

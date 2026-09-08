@@ -96,6 +96,38 @@ class ApiClient {
     });
   }
 
+  // GET /api/products/barcode/{barcode}?storeId= — camera/hardware scan lookup.
+  Future<ProductLite> getProductByBarcode(String barcode, {required String token, required int storeId}) async {
+    final resp = await _send(
+      () => _http.get(
+        _uri('/api/products/barcode/${Uri.encodeComponent(barcode)}')
+            .replace(queryParameters: {'storeId': '$storeId'}),
+        headers: _headers(token: token),
+      ),
+    );
+    if (resp.statusCode == 200) {
+      return ProductLite.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+    }
+    final msg = _extractMessage(resp);
+    if (resp.statusCode == 404) throw ProductNotFoundException(404, msg);
+    if (resp.statusCode == 409) throw ProductNotSellableException(409, msg);
+    throw UnknownApiException(resp.statusCode, msg);
+  }
+
+  // GET /api/inventory/stock/{storeId} — current on-hand quantity per product.
+  Future<Map<int, int>> getStock({required String token, required int storeId}) async {
+    final resp = await _send(
+      () => _http.get(_uri('/api/inventory/stock/$storeId'), headers: _headers(token: token)),
+    );
+    return _okOrThrow(resp, (body) {
+      final list = body as List<dynamic>;
+      return {
+        for (final e in list)
+          ((e as Map<String, dynamic>)['productId'] as num).toInt(): (e['quantity'] as num).toInt(),
+      };
+    });
+  }
+
   // ---- Inventory visits -----------------------------------------------
   // Contract per ~/git/to_Frontend_AI_On_Inventory_Task.
 
