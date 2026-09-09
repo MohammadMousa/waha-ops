@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
-import '../models/branch.dart';
+import '../models/category.dart';
 import '../models/employee_session.dart';
 import '../models/product_lite.dart';
 import '../models/visit_operation.dart';
@@ -54,6 +54,21 @@ class ApiClient {
     throw UnknownApiException(resp.statusCode, msg);
   }
 
+  // ---- Config ----------------------------------------------------------
+
+  // GET /api/config?orgId= — no auth, callable before login. orgId is
+  // required to get org-specific properties (like appName) merged in —
+  // omitting it only returns global (org=0) ones. Per
+  // to_Frontend_AI_On_Inventory_Task [11]: `appName` is already a parsed
+  // {ar, en} object, not a raw JSON string.
+  Future<Map<String, dynamic>?> getAppName({int orgId = AppConfig.defaultOrganizationId}) async {
+    final resp = await _send(
+      () => _http.get(_uri('/api/config').replace(queryParameters: {'orgId': '$orgId'})),
+    );
+    return _okOrThrow(
+        resp, (body) => (body as Map<String, dynamic>)['appName'] as Map<String, dynamic>?);
+  }
+
   // ---- Auth ----------------------------------------------------------
 
   // POST /api/pos/auth/login  { username, pinCode }
@@ -66,18 +81,6 @@ class ApiClient {
       ),
     );
     return _okOrThrow(resp, (body) => EmployeeSession.fromJson(body as Map<String, dynamic>));
-  }
-
-  // POST /api/pos/auth/store  { storeId } — explicit store selection, no auto-pick.
-  Future<StoreSelection> selectStore(String token, int storeId) async {
-    final resp = await _send(
-      () => _http.post(
-        _uri('/api/pos/auth/store'),
-        headers: _headers(token: token),
-        body: jsonEncode({'storeId': storeId}),
-      ),
-    );
-    return _okOrThrow(resp, (body) => StoreSelection.fromJson(body as Map<String, dynamic>));
   }
 
   // ---- Products (existing endpoint, reused as-is) ---------------------
@@ -125,6 +128,20 @@ class ApiClient {
     return _okOrThrow(resp, _parseProductList);
   }
 
+  // GET /api/categories?storeId= — per to_Frontend_AI_On_Inventory_Task [10].
+  Future<List<Category>> getCategories({required String token, required int storeId}) async {
+    final resp = await _send(
+      () => _http.get(
+        _uri('/api/categories').replace(queryParameters: {'storeId': '$storeId'}),
+        headers: _headers(token: token),
+      ),
+    );
+    return _okOrThrow(resp, (body) {
+      final list = body as List<dynamic>;
+      return list.map((e) => Category.fromJson(e as Map<String, dynamic>)).toList();
+    });
+  }
+
   List<ProductLite> _parseProductList(dynamic body) {
     final map = body as Map<String, dynamic>;
     // Real key is "products" (confirmed against the live response) — not
@@ -169,21 +186,16 @@ class ApiClient {
   // ---- Inventory visits -----------------------------------------------
   // Contract per ~/git/to_Frontend_AI_On_Inventory_Task.
 
-  // GET /api/inventory/branches — all active stores in the employee's org.
-  Future<List<Branch>> getBranches(String token) async {
+  // POST /api/inventory/visits  { storeId } — the employee's chosen working
+  // store for this visit (picked locally on the frontend; there is no
+  // backend store-selection call anymore, see to_Frontend_AI_On_Inventory_Task [8]).
+  Future<VisitStart> startVisit(String token, int storeId) async {
     final resp = await _send(
-      () => _http.get(_uri('/api/inventory/branches'), headers: _headers(token: token)),
-    );
-    return _okOrThrow(resp, (body) {
-      final list = body as List<dynamic>;
-      return list.map((e) => Branch.fromJson(e as Map<String, dynamic>)).toList();
-    });
-  }
-
-  // POST /api/inventory/visits — no body; origin store comes from session.
-  Future<VisitStart> startVisit(String token) async {
-    final resp = await _send(
-      () => _http.post(_uri('/api/inventory/visits'), headers: _headers(token: token)),
+      () => _http.post(
+        _uri('/api/inventory/visits'),
+        headers: _headers(token: token),
+        body: jsonEncode({'storeId': storeId}),
+      ),
     );
     return _okOrThrow(resp, (body) {
       final map = body as Map<String, dynamic>;

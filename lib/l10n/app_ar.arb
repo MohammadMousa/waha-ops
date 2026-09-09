@@ -1,7 +1,7 @@
 {
   "@@locale": "ar",
 
-  "appTitle": "عمليات واها",
+  "appTitle": "واحة",
   "inventoryVisitsSubtitle": "زيارات المخزون",
 
   "usernameLabel": "اسم المستخدم",
@@ -10,25 +10,27 @@
   "enterUsernameAndPin": "أدخل اسم المستخدم والرقم السري",
   "couldNotReachServer": "تعذر الوصول إلى الخادم",
 
-  "selectYourBranch": "اختر فرعك",
+  "selectYourBranch": "اختر الفرع",
   "noBranchAccessMessage": "لا يملك هذا الحساب صلاحية الوصول لأي فرع.",
   "backToLogin": "العودة لتسجيل الدخول",
   "logOut": "تسجيل الخروج",
-  "noInventoryAccessAt": "لا توجد صلاحية مخزون في {branch}. اختر فرعًا آخر، أو سجّل الخروج لتبديل الحساب.",
-  "@noInventoryAccessAt": {
-    "placeholders": { "branch": { "type": "String" } }
-  },
+  "noInventoryPermissionMessage": "لا يملك هذا الحساب صلاحية الوصول للمخزون.",
   "dismiss": "إغلاق",
 
+  "languageMenuLabel": "اللغة",
   "changeBranch": "تغيير الفرع",
+  "selectDestinationBranch": "اختر فرع الوجهة",
+  "selectTransferSourceBranch": "من أي فرع سيتم النقل؟",
+  "selectReturnTargetBranch": "إلى أي فرع سيتم الإرجاع؟",
   "endVisitFirstTitle": "أنهِ الزيارة أولاً",
   "endVisitFirstBody": "لديك زيارة نشطة. أنهِها قبل تغيير الفرع.",
   "cancel": "إلغاء",
   "endVisitAndSwitch": "إنهاء الزيارة والتبديل",
 
   "startingVisit": "جاري بدء الزيارة…",
-  "transferLabel": "تحويل",
-  "returnLabel": "إرجاع",
+  "startVisitButton": "بدء الزيارة",
+  "transferLabel": "نقل مخزون",
+  "returnLabel": "ارجاع مخزون",
   "cancelVisit": "إلغاء الزيارة",
   "endVisit": "إنهاء الزيارة",
   "cancelVisitConfirmTitle": "إلغاء هذه الزيارة؟",
@@ -43,10 +45,14 @@
   "noMatches": "لا توجد نتائج",
   "inStockOnly": "المتوفر فقط",
   "branchStockLabel": "مخزون الفرع",
-  "quantityLabel": "الكمية",
+  "quantityLabel": "أضف الكمية",
   "enterValidQuantity": "أدخل كمية صحيحة",
   "selectAProduct": "اختر منتجًا",
-  "addButton": "إضافة",
+  "addButton": "حفظ",
+  "productTransferTitle": "نقل المنتج",
+  "productReturnTitle": "إرجاع المنتج",
+  "endingInventoryLabel": "المخزون النهائي",
+  "unitsSuffix": "وحدة",
   "saveItemsCount": "حفظ {count} عنصر",
   "@saveItemsCount": {
     "placeholders": { "count": { "type": "int" } }
@@ -55,7 +61,28 @@
   "@itemsAddedCount": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "operationSavedTitle": "تم حفظ العملية",
+  "operationSavedMessage": "تم حفظ العملية بنجاح.",
+  "finishOperationFirstMessage": "أنهِ أو احذف أصناف هذه العملية قبل إنهاء الزيارة.",
 
   "scanBarcode": "مسح الباركود",
-  "alignBarcode": "ضع الباركود داخل الإطار"
+  "alignBarcode": "ضع الباركود داخل الإطار",
+
+  "filterProductsTitle": "تصفية المنتجات",
+  "productNameLabel": "اسم المنتج",
+  "enterProductName": "أدخل اسم المنتج...",
+  "barcodeLabel": "الباركود",
+  "enterOrScanBarcode": "أدخل أو امسح الباركود...",
+  "categoryLabel": "الفئة",
+  "allCategoriesLabel": "كل الفئات",
+  "descriptionKeywordLabel": "كلمة مفتاحية في الوصف",
+  "applyFiltersButton": "تطبيق الفلاتر",
+  "clearAllButton": "مسح الكل",
+
+  "itemColumnLabel": "الصنف",
+  "qtyColumnLabel": "الكمية",
+  "finalColumnLabel": "النهائي",
+  "saveChangesButton": "حفظ",
+  "transferItemsTitle": "أصناف النقل",
+  "returnItemsTitle": "أصناف الإرجاع"
 }

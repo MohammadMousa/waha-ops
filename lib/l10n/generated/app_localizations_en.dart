@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Waha Operations';
+  String get appTitle => 'Waha';
 
   @override
   String get inventoryVisitsSubtitle => 'Inventory visits';
@@ -30,7 +30,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotReachServer => 'Could not reach the server';
 
   @override
-  String get selectYourBranch => 'Select Your Branch';
+  String get selectYourBranch => 'Pick A Branch';
 
   @override
   String get noBranchAccessMessage => 'This account has no branch access.';
@@ -42,15 +42,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logOut => 'Log out';
 
   @override
-  String noInventoryAccessAt(String branch) {
-    return 'No inventory access at $branch. Pick a different branch, or log out to switch accounts.';
-  }
+  String get noInventoryPermissionMessage =>
+      'This account doesn\'t have inventory access.';
 
   @override
   String get dismiss => 'Dismiss';
 
   @override
+  String get languageMenuLabel => 'Language';
+
+  @override
   String get changeBranch => 'Change Branch';
+
+  @override
+  String get selectDestinationBranch => 'Select destination branch';
+
+  @override
+  String get selectTransferSourceBranch => 'Which branch is sending this?';
+
+  @override
+  String get selectReturnTargetBranch =>
+      'Which branch are you returning this to?';
 
   @override
   String get endVisitFirstTitle => 'End visit first';
@@ -69,10 +81,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startingVisit => 'Starting visit…';
 
   @override
-  String get transferLabel => 'Transfer';
+  String get startVisitButton => 'Start Visit';
 
   @override
-  String get returnLabel => 'Return';
+  String get transferLabel => 'Transfer Stock';
+
+  @override
+  String get returnLabel => 'Return Stock';
 
   @override
   String get cancelVisit => 'Cancel Visit';
@@ -114,7 +129,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get branchStockLabel => 'Branch Stock';
 
   @override
-  String get quantityLabel => 'Quantity';
+  String get quantityLabel => 'Add Quantity';
 
   @override
   String get enterValidQuantity => 'Enter a valid quantity';
@@ -123,7 +138,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectAProduct => 'Select a product';
 
   @override
-  String get addButton => 'Add';
+  String get addButton => 'Save';
+
+  @override
+  String get productTransferTitle => 'Product Transfer';
+
+  @override
+  String get productReturnTitle => 'Product Return';
+
+  @override
+  String get endingInventoryLabel => 'Ending Inventory';
+
+  @override
+  String get unitsSuffix => 'units';
 
   @override
   String saveItemsCount(int count) {
@@ -136,8 +163,66 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get operationSavedTitle => 'Operation saved';
+
+  @override
+  String get operationSavedMessage => 'Operation is saved successfully.';
+
+  @override
+  String get finishOperationFirstMessage =>
+      'Finish or discard this operation\'s items before ending the visit.';
+
+  @override
   String get scanBarcode => 'Scan Barcode';
 
   @override
   String get alignBarcode => 'Align the barcode within the frame';
+
+  @override
+  String get filterProductsTitle => 'Filter Products';
+
+  @override
+  String get productNameLabel => 'Product Name';
+
+  @override
+  String get enterProductName => 'Enter product name…';
+
+  @override
+  String get barcodeLabel => 'Barcode';
+
+  @override
+  String get enterOrScanBarcode => 'Enter or scan barcode…';
+
+  @override
+  String get categoryLabel => 'Category';
+
+  @override
+  String get allCategoriesLabel => 'All Categories';
+
+  @override
+  String get descriptionKeywordLabel => 'Description Keyword';
+
+  @override
+  String get applyFiltersButton => 'Apply Filters';
+
+  @override
+  String get clearAllButton => 'Clear All';
+
+  @override
+  String get itemColumnLabel => 'Item';
+
+  @override
+  String get qtyColumnLabel => 'Qty';
+
+  @override
+  String get finalColumnLabel => 'Final';
+
+  @override
+  String get saveChangesButton => 'Save';
+
+  @override
+  String get transferItemsTitle => 'Transfer Items';
+
+  @override
+  String get returnItemsTitle => 'Return Items';
 }

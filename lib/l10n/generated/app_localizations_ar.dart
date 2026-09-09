@@ -9,7 +9,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'عمليات واها';
+  String get appTitle => 'واحة';
 
   @override
   String get inventoryVisitsSubtitle => 'زيارات المخزون';
@@ -30,7 +30,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get couldNotReachServer => 'تعذر الوصول إلى الخادم';
 
   @override
-  String get selectYourBranch => 'اختر فرعك';
+  String get selectYourBranch => 'اختر الفرع';
 
   @override
   String get noBranchAccessMessage =>
@@ -43,15 +43,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String get logOut => 'تسجيل الخروج';
 
   @override
-  String noInventoryAccessAt(String branch) {
-    return 'لا توجد صلاحية مخزون في $branch. اختر فرعًا آخر، أو سجّل الخروج لتبديل الحساب.';
-  }
+  String get noInventoryPermissionMessage =>
+      'لا يملك هذا الحساب صلاحية الوصول للمخزون.';
 
   @override
   String get dismiss => 'إغلاق';
 
   @override
+  String get languageMenuLabel => 'اللغة';
+
+  @override
   String get changeBranch => 'تغيير الفرع';
+
+  @override
+  String get selectDestinationBranch => 'اختر فرع الوجهة';
+
+  @override
+  String get selectTransferSourceBranch => 'من أي فرع سيتم النقل؟';
+
+  @override
+  String get selectReturnTargetBranch => 'إلى أي فرع سيتم الإرجاع؟';
 
   @override
   String get endVisitFirstTitle => 'أنهِ الزيارة أولاً';
@@ -69,10 +80,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get startingVisit => 'جاري بدء الزيارة…';
 
   @override
-  String get transferLabel => 'تحويل';
+  String get startVisitButton => 'بدء الزيارة';
 
   @override
-  String get returnLabel => 'إرجاع';
+  String get transferLabel => 'نقل مخزون';
+
+  @override
+  String get returnLabel => 'ارجاع مخزون';
 
   @override
   String get cancelVisit => 'إلغاء الزيارة';
@@ -114,7 +128,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get branchStockLabel => 'مخزون الفرع';
 
   @override
-  String get quantityLabel => 'الكمية';
+  String get quantityLabel => 'أضف الكمية';
 
   @override
   String get enterValidQuantity => 'أدخل كمية صحيحة';
@@ -123,7 +137,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectAProduct => 'اختر منتجًا';
 
   @override
-  String get addButton => 'إضافة';
+  String get addButton => 'حفظ';
+
+  @override
+  String get productTransferTitle => 'نقل المنتج';
+
+  @override
+  String get productReturnTitle => 'إرجاع المنتج';
+
+  @override
+  String get endingInventoryLabel => 'المخزون النهائي';
+
+  @override
+  String get unitsSuffix => 'وحدة';
 
   @override
   String saveItemsCount(int count) {
@@ -136,8 +162,66 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get operationSavedTitle => 'تم حفظ العملية';
+
+  @override
+  String get operationSavedMessage => 'تم حفظ العملية بنجاح.';
+
+  @override
+  String get finishOperationFirstMessage =>
+      'أنهِ أو احذف أصناف هذه العملية قبل إنهاء الزيارة.';
+
+  @override
   String get scanBarcode => 'مسح الباركود';
 
   @override
   String get alignBarcode => 'ضع الباركود داخل الإطار';
+
+  @override
+  String get filterProductsTitle => 'تصفية المنتجات';
+
+  @override
+  String get productNameLabel => 'اسم المنتج';
+
+  @override
+  String get enterProductName => 'أدخل اسم المنتج...';
+
+  @override
+  String get barcodeLabel => 'الباركود';
+
+  @override
+  String get enterOrScanBarcode => 'أدخل أو امسح الباركود...';
+
+  @override
+  String get categoryLabel => 'الفئة';
+
+  @override
+  String get allCategoriesLabel => 'كل الفئات';
+
+  @override
+  String get descriptionKeywordLabel => 'كلمة مفتاحية في الوصف';
+
+  @override
+  String get applyFiltersButton => 'تطبيق الفلاتر';
+
+  @override
+  String get clearAllButton => 'مسح الكل';
+
+  @override
+  String get itemColumnLabel => 'الصنف';
+
+  @override
+  String get qtyColumnLabel => 'الكمية';
+
+  @override
+  String get finalColumnLabel => 'النهائي';
+
+  @override
+  String get saveChangesButton => 'حفظ';
+
+  @override
+  String get transferItemsTitle => 'أصناف النقل';
+
+  @override
+  String get returnItemsTitle => 'أصناف الإرجاع';
 }

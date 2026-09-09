@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Waha Operations'**
+  /// **'Waha'**
   String get appTitle;
 
   /// No description provided for @inventoryVisitsSubtitle.
@@ -143,7 +143,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectYourBranch.
   ///
   /// In en, this message translates to:
-  /// **'Select Your Branch'**
+  /// **'Pick A Branch'**
   String get selectYourBranch;
 
   /// No description provided for @noBranchAccessMessage.
@@ -164,11 +164,11 @@ abstract class AppLocalizations {
   /// **'Log out'**
   String get logOut;
 
-  /// No description provided for @noInventoryAccessAt.
+  /// No description provided for @noInventoryPermissionMessage.
   ///
   /// In en, this message translates to:
-  /// **'No inventory access at {branch}. Pick a different branch, or log out to switch accounts.'**
-  String noInventoryAccessAt(String branch);
+  /// **'This account doesn\'t have inventory access.'**
+  String get noInventoryPermissionMessage;
 
   /// No description provided for @dismiss.
   ///
@@ -176,11 +176,35 @@ abstract class AppLocalizations {
   /// **'Dismiss'**
   String get dismiss;
 
+  /// No description provided for @languageMenuLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageMenuLabel;
+
   /// No description provided for @changeBranch.
   ///
   /// In en, this message translates to:
   /// **'Change Branch'**
   String get changeBranch;
+
+  /// No description provided for @selectDestinationBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Select destination branch'**
+  String get selectDestinationBranch;
+
+  /// No description provided for @selectTransferSourceBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Which branch is sending this?'**
+  String get selectTransferSourceBranch;
+
+  /// No description provided for @selectReturnTargetBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Which branch are you returning this to?'**
+  String get selectReturnTargetBranch;
 
   /// No description provided for @endVisitFirstTitle.
   ///
@@ -212,16 +236,22 @@ abstract class AppLocalizations {
   /// **'Starting visit…'**
   String get startingVisit;
 
+  /// No description provided for @startVisitButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Visit'**
+  String get startVisitButton;
+
   /// No description provided for @transferLabel.
   ///
   /// In en, this message translates to:
-  /// **'Transfer'**
+  /// **'Transfer Stock'**
   String get transferLabel;
 
   /// No description provided for @returnLabel.
   ///
   /// In en, this message translates to:
-  /// **'Return'**
+  /// **'Return Stock'**
   String get returnLabel;
 
   /// No description provided for @cancelVisit.
@@ -305,7 +335,7 @@ abstract class AppLocalizations {
   /// No description provided for @quantityLabel.
   ///
   /// In en, this message translates to:
-  /// **'Quantity'**
+  /// **'Add Quantity'**
   String get quantityLabel;
 
   /// No description provided for @enterValidQuantity.
@@ -323,8 +353,32 @@ abstract class AppLocalizations {
   /// No description provided for @addButton.
   ///
   /// In en, this message translates to:
-  /// **'Add'**
+  /// **'Save'**
   String get addButton;
+
+  /// No description provided for @productTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Transfer'**
+  String get productTransferTitle;
+
+  /// No description provided for @productReturnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Return'**
+  String get productReturnTitle;
+
+  /// No description provided for @endingInventoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ending Inventory'**
+  String get endingInventoryLabel;
+
+  /// No description provided for @unitsSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'units'**
+  String get unitsSuffix;
 
   /// No description provided for @saveItemsCount.
   ///
@@ -338,6 +392,24 @@ abstract class AppLocalizations {
   /// **'{count} item(s) added'**
   String itemsAddedCount(int count);
 
+  /// No description provided for @operationSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Operation saved'**
+  String get operationSavedTitle;
+
+  /// No description provided for @operationSavedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Operation is saved successfully.'**
+  String get operationSavedMessage;
+
+  /// No description provided for @finishOperationFirstMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish or discard this operation\'s items before ending the visit.'**
+  String get finishOperationFirstMessage;
+
   /// No description provided for @scanBarcode.
   ///
   /// In en, this message translates to:
@@ -349,6 +421,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Align the barcode within the frame'**
   String get alignBarcode;
+
+  /// No description provided for @filterProductsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Products'**
+  String get filterProductsTitle;
+
+  /// No description provided for @productNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Name'**
+  String get productNameLabel;
+
+  /// No description provided for @enterProductName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter product name…'**
+  String get enterProductName;
+
+  /// No description provided for @barcodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode'**
+  String get barcodeLabel;
+
+  /// No description provided for @enterOrScanBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter or scan barcode…'**
+  String get enterOrScanBarcode;
+
+  /// No description provided for @categoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get categoryLabel;
+
+  /// No description provided for @allCategoriesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All Categories'**
+  String get allCategoriesLabel;
+
+  /// No description provided for @descriptionKeywordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description Keyword'**
+  String get descriptionKeywordLabel;
+
+  /// No description provided for @applyFiltersButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Filters'**
+  String get applyFiltersButton;
+
+  /// No description provided for @clearAllButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get clearAllButton;
+
+  /// No description provided for @itemColumnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get itemColumnLabel;
+
+  /// No description provided for @qtyColumnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get qtyColumnLabel;
+
+  /// No description provided for @finalColumnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Final'**
+  String get finalColumnLabel;
+
+  /// No description provided for @saveChangesButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveChangesButton;
+
+  /// No description provided for @transferItemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer Items'**
+  String get transferItemsTitle;
+
+  /// No description provided for @returnItemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Return Items'**
+  String get returnItemsTitle;
 }
 
 class _AppLocalizationsDelegate

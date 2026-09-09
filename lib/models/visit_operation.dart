@@ -15,30 +15,42 @@ class OperationItem {
   final int productId;
   final String productLabel;
   final int quantity;
+  // Branch stock at the moment this item was staged — null if unknown (the
+  // stock fetch failed). Carried along purely so the staged-items screen
+  // can show a "Final" column without re-fetching; not sent to the backend.
+  final int? branchStock;
+  final int? imageResourceId; // same — thumbnail on the staged-items row
 
   const OperationItem({
     required this.productId,
     required this.productLabel,
     required this.quantity,
+    this.branchStock,
+    this.imageResourceId,
   });
 }
 
-// One TRANSFER or RETURN record added to the active visit. Per the backend
-// contract, targetStoreId is required for both types:
-//   TRANSFER — origin store loses qty, targetStoreId gains qty.
-//   RETURN   — targetStoreId loses qty, origin store gains qty.
+// One TRANSFER or RETURN record added to the active visit. Per the human
+// lead (2026-09-09, see ~/git/to_Backend_AI_On_Inventory_Task [11]/[12]):
+// TRANSFER/RETURN are company↔branch, never branch↔branch — "company" is
+// an untracked, conceptual stock source, not a second store row. There is
+// no destination picker; `targetStoreId` is always the visit's own origin
+// store (the only branch ever in play). Backend confirmed (see
+// to_Frontend_AI_On_Inventory_Task [9]) its stock effect now applies
+// entirely to `targetStoreId`, origin (`visit.store_id`) being purely
+// administrative:
+//   TRANSFER (company → branch) — targetStoreId (= origin) gains qty.
+//   RETURN   (branch → company) — targetStoreId (= origin) loses qty.
 class VisitOperation {
   final int? operationId; // set once the backend confirms the add
   final OperationType type;
   final int targetStoreId;
-  final String targetStoreLabel;
   final List<OperationItem> items;
 
   const VisitOperation({
     this.operationId,
     required this.type,
     required this.targetStoreId,
-    required this.targetStoreLabel,
     required this.items,
   });
 
@@ -46,7 +58,6 @@ class VisitOperation {
         operationId: id,
         type: type,
         targetStoreId: targetStoreId,
-        targetStoreLabel: targetStoreLabel,
         items: items,
       );
 

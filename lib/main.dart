@@ -8,11 +8,10 @@ import 'screens/login_screen.dart';
 import 'screens/store_select_screen.dart';
 import 'screens/visit_home_screen.dart';
 import 'services/api_client.dart';
+import 'state/app_config_state.dart';
 import 'state/auth_state.dart';
 import 'state/locale_state.dart';
 import 'state/visit_state.dart';
-
-const _kProcessInventoryPermission = 'PROCESS_INVENTORY';
 
 void main() {
   runApp(const WahaOpsApp());
@@ -29,10 +28,14 @@ class WahaOpsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthState()),
         ChangeNotifierProvider(create: (_) => VisitState()),
         ChangeNotifierProvider(create: (_) => LocaleState()..load()),
+        // Fetched once at boot, before login — see AppConfigState's doc.
+        ChangeNotifierProvider(create: (_) => AppConfigState()..load(ApiClient())),
       ],
-      child: Consumer<LocaleState>(
-        builder: (context, localeState, _) => MaterialApp(
-          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      child: Consumer2<LocaleState, AppConfigState>(
+        builder: (context, localeState, appConfig, _) => MaterialApp(
+          onGenerateTitle: (context) =>
+              appConfig.title(localeState.locale.languageCode) ??
+              AppLocalizations.of(context)!.appTitle,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
             // Material 3's AppBar defaults to a pale surface color, not
@@ -71,11 +74,12 @@ class WahaOpsApp extends StatelessWidget {
   }
 }
 
-enum _StartupTarget { login, storeSelect, visitHome }
+enum _StartupTarget { login, storeSelect }
 
-// Tries a cached employee session (and, if a store was previously chosen
-// and is still accessible, re-selects it automatically) before showing
-// the login screen.
+// Tries a cached employee session before showing the login screen. Never
+// re-selects a store or resumes a visit on its own — a reload always lands
+// on StoreSelectScreen (or LoginScreen), branch pick stays manual every
+// time (see AuthState.resolveStartupAuth).
 class _StartupGate extends StatefulWidget {
   const _StartupGate();
 
@@ -96,22 +100,11 @@ class _StartupGateState extends State<_StartupGate> {
   Future<void> _resolve() async {
     final auth = context.read<AuthState>();
     final api = context.read<ApiClient>();
-    final visit = context.read<VisitState>();
     final loggedIn = await auth.resolveStartupAuth(api);
-
-    var target = _StartupTarget.login;
-    if (loggedIn) {
-      if (auth.hasSelectedStore) {
-        if (!auth.hasPermission(_kProcessInventoryPermission)) {
-          await auth.logout();
-        } else {
-          await visit.loadDestinationBranches(api, auth.token!, auth.storeId!);
-          target = _StartupTarget.visitHome;
-        }
-      } else {
-        target = _StartupTarget.storeSelect;
-      }
-    }
+    // resolveStartupAuth always clears storeId (see its doc) — a reload
+    // never has a store already selected, so this only ever chooses
+    // between login and storeSelect.
+    final target = loggedIn ? _StartupTarget.storeSelect : _StartupTarget.login;
 
     if (mounted) {
       setState(() {
@@ -127,8 +120,6 @@ class _StartupGateState extends State<_StartupGate> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     switch (_target) {
-      case _StartupTarget.visitHome:
-        return const VisitHomeScreen();
       case _StartupTarget.storeSelect:
         return const StoreSelectScreen();
       case _StartupTarget.login:

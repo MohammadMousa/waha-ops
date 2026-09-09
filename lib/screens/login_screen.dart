@@ -5,6 +5,7 @@ import '../l10n/generated/app_localizations.dart';
 import '../router/routes.dart';
 import '../services/api_client.dart';
 import '../services/api_exceptions.dart';
+import '../state/app_config_state.dart';
 import '../state/auth_state.dart';
 import '../state/locale_state.dart';
 
@@ -36,9 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await auth.login(api, _username.text.trim(), _pin.text.trim());
       if (!mounted) return;
-      // StoreSelectScreen handles all three cases: 0 stores (no access),
-      // 1 store (auto-selects), many (shows the picker) — see
-      // to_Frontend_AI_On_Inventory_Task [4]: the backend never picks one.
+      // StoreSelectScreen handles every case from here: 0 stores (no
+      // branch access), no PROCESS_INVENTORY permission (resolved at
+      // login, applies to every store), or a normal picker — always a
+      // manual tap, never auto-selected, even with only one store.
       Navigator.of(context).pushReplacementNamed(Routes.storeSelect);
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -60,6 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final locale = context.watch<LocaleState>();
+    final appConfig = context.watch<AppConfigState>();
+    final title = appConfig.title(locale.locale.languageCode) ?? l10n.appTitle;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F8),
       body: Center(
@@ -80,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(locale.locale.languageCode == 'ar' ? 'EN' : 'AR'),
                     ),
                   ),
-                  Text(l10n.appTitle,
+                  Text(title,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),

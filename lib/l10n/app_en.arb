@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
 
-  "appTitle": "Waha Operations",
+  "appTitle": "Waha",
   "inventoryVisitsSubtitle": "Inventory visits",
 
   "usernameLabel": "Username",
@@ -10,25 +10,27 @@
   "enterUsernameAndPin": "Enter username and PIN",
   "couldNotReachServer": "Could not reach the server",
 
-  "selectYourBranch": "Select Your Branch",
+  "selectYourBranch": "Pick A Branch",
   "noBranchAccessMessage": "This account has no branch access.",
   "backToLogin": "Back to login",
   "logOut": "Log out",
-  "noInventoryAccessAt": "No inventory access at {branch}. Pick a different branch, or log out to switch accounts.",
-  "@noInventoryAccessAt": {
-    "placeholders": { "branch": { "type": "String" } }
-  },
+  "noInventoryPermissionMessage": "This account doesn't have inventory access.",
   "dismiss": "Dismiss",
 
+  "languageMenuLabel": "Language",
   "changeBranch": "Change Branch",
+  "selectDestinationBranch": "Select destination branch",
+  "selectTransferSourceBranch": "Which branch is sending this?",
+  "selectReturnTargetBranch": "Which branch are you returning this to?",
   "endVisitFirstTitle": "End visit first",
   "endVisitFirstBody": "You have an active visit. End it before switching branches.",
   "cancel": "Cancel",
   "endVisitAndSwitch": "End Visit & Switch",
 
   "startingVisit": "Starting visit…",
-  "transferLabel": "Transfer",
-  "returnLabel": "Return",
+  "startVisitButton": "Start Visit",
+  "transferLabel": "Transfer Stock",
+  "returnLabel": "Return Stock",
   "cancelVisit": "Cancel Visit",
   "endVisit": "End Visit",
   "cancelVisitConfirmTitle": "Cancel this visit?",
@@ -43,10 +45,14 @@
   "noMatches": "No matches",
   "inStockOnly": "In stock only",
   "branchStockLabel": "Branch Stock",
-  "quantityLabel": "Quantity",
+  "quantityLabel": "Add Quantity",
   "enterValidQuantity": "Enter a valid quantity",
   "selectAProduct": "Select a product",
-  "addButton": "Add",
+  "addButton": "Save",
+  "productTransferTitle": "Product Transfer",
+  "productReturnTitle": "Product Return",
+  "endingInventoryLabel": "Ending Inventory",
+  "unitsSuffix": "units",
   "saveItemsCount": "Save {count} item(s)",
   "@saveItemsCount": {
     "placeholders": { "count": { "type": "int" } }
@@ -55,7 +61,28 @@
   "@itemsAddedCount": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "operationSavedTitle": "Operation saved",
+  "operationSavedMessage": "Operation is saved successfully.",
+  "finishOperationFirstMessage": "Finish or discard this operation's items before ending the visit.",
 
   "scanBarcode": "Scan Barcode",
-  "alignBarcode": "Align the barcode within the frame"
+  "alignBarcode": "Align the barcode within the frame",
+
+  "filterProductsTitle": "Filter Products",
+  "productNameLabel": "Product Name",
+  "enterProductName": "Enter product name…",
+  "barcodeLabel": "Barcode",
+  "enterOrScanBarcode": "Enter or scan barcode…",
+  "categoryLabel": "Category",
+  "allCategoriesLabel": "All Categories",
+  "descriptionKeywordLabel": "Description Keyword",
+  "applyFiltersButton": "Apply Filters",
+  "clearAllButton": "Clear All",
+
+  "itemColumnLabel": "Item",
+  "qtyColumnLabel": "Qty",
+  "finalColumnLabel": "Final",
+  "saveChangesButton": "Save",
+  "transferItemsTitle": "Transfer Items",
+  "returnItemsTitle": "Return Items"
 }

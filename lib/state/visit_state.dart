@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../models/branch.dart';
 import '../models/visit_operation.dart';
 import '../services/api_client.dart';
 
 enum VisitStatus { none, active, completed }
 
-// Holds the destination-branch picker, the active visit, and its operations.
-// The visit's origin store is fixed by the employee's session (set at
-// login) — this state never lets the employee change it. `targetBranch` is
-// the destination for the Transfer/Return being composed — picked via
-// BranchPickerSheet before opening AddOperationScreen, sticky across adds
-// until changed.
+// Holds the active visit and its operations. The visit's origin store is
+// fixed by the employee's session (set at login) — this state never lets
+// the employee change it. There is no destination/target-branch concept —
+// every TRANSFER/RETURN is company↔branch (see VisitOperation's doc).
 //
 // reset() doubles as "cancel visit": per the human lead, cancelling is a
 // pure local undo — never call completeVisit for it. Anything already
@@ -21,9 +18,6 @@ enum VisitStatus { none, active, completed }
 // real stock. Don't try to "clean up" by deleting those operations or
 // completing empty — just stop touching this visit and reset local state.
 class VisitState extends ChangeNotifier {
-  List<Branch> destinationBranches = [];
-  Branch? targetBranch;
-
   int? visitId;
   int? originStoreId;
   String? originStoreName;
@@ -32,30 +26,12 @@ class VisitState extends ChangeNotifier {
   bool busy = false;
   String? error;
 
-  Future<bool> loadDestinationBranches(ApiClient api, String token, int excludeStoreId) async {
+  Future<bool> startVisit(ApiClient api, String token, int storeId) async {
     busy = true;
     error = null;
     notifyListeners();
     try {
-      final all = await api.getBranches(token);
-      destinationBranches = all.where((b) => b.id != excludeStoreId).toList();
-      targetBranch = destinationBranches.isNotEmpty ? destinationBranches.first : null;
-      return true;
-    } catch (e) {
-      error = e.toString();
-      return false;
-    } finally {
-      busy = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> startVisit(ApiClient api, String token) async {
-    busy = true;
-    error = null;
-    notifyListeners();
-    try {
-      final started = await api.startVisit(token);
+      final started = await api.startVisit(token, storeId);
       visitId = started.id;
       originStoreId = started.storeId;
       originStoreName = started.storeName;
@@ -71,26 +47,22 @@ class VisitState extends ChangeNotifier {
     }
   }
 
-  void setTargetBranch(Branch branch) {
-    targetBranch = branch;
-    notifyListeners();
-  }
-
   Future<bool> addOperation(
     ApiClient api,
     String token,
     OperationType type,
     List<OperationItem> items,
-    String languageCode,
   ) async {
-    if (visitId == null || targetBranch == null) return false;
+    if (visitId == null || originStoreId == null) return false;
     busy = true;
     error = null;
     notifyListeners();
+    // No destination picker — every operation is company↔branch, so the
+    // required targetStoreId is always this visit's own origin store. See
+    // VisitOperation's doc comment for the backend contract this satisfies.
     final draft = VisitOperation(
       type: type,
-      targetStoreId: targetBranch!.id,
-      targetStoreLabel: targetBranch!.label(languageCode),
+      targetStoreId: originStoreId!,
       items: items,
     );
     try {
