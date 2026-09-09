@@ -3,7 +3,7 @@
 Waha Operations — a Flutter app for the branch employee inventory-visit
 workflow: pick a branch, start a visit, and record Transfer or Return
 operations against it. Full Arabic/English i18n (RTL-aware), built against
-the `waha` backend (see `~/git/waha`).
+the [Waha backend](github.com/MohammadMousa/waha) REST API.
 
 ## Flow
 
