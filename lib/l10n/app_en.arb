@@ -18,6 +18,12 @@
   "dismiss": "Dismiss",
 
   "languageMenuLabel": "Language",
+  "aboutMenuLabel": "About",
+  "aboutVersionLabel": "Version",
+  "aboutBuildLabel": "Build",
+  "aboutBuiltLabel": "Built",
+  "aboutServerLabel": "Server",
+  "closeButton": "Close",
   "changeBranch": "Change Branch",
   "selectDestinationBranch": "Select destination branch",
   "selectTransferSourceBranch": "Which branch is sending this?",

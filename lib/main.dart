@@ -8,12 +8,17 @@ import 'screens/login_screen.dart';
 import 'screens/store_select_screen.dart';
 import 'screens/visit_home_screen.dart';
 import 'services/api_client.dart';
+import 'services/app_info.dart';
 import 'state/app_config_state.dart';
 import 'state/auth_state.dart';
 import 'state/locale_state.dart';
 import 'state/visit_state.dart';
 
-void main() {
+void main() async {
+  // Needed before touching any platform channel (package_info_plus
+  // included) pre-runApp.
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppInfo.init();
   runApp(const WahaOpsApp());
 }
 

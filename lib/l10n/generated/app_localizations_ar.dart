@@ -53,6 +53,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageMenuLabel => 'اللغة';
 
   @override
+  String get aboutMenuLabel => 'حول التطبيق';
+
+  @override
+  String get aboutVersionLabel => 'الإصدار';
+
+  @override
+  String get aboutBuildLabel => 'رقم البناء';
+
+  @override
+  String get aboutBuiltLabel => 'تاريخ البناء';
+
+  @override
+  String get aboutServerLabel => 'الخادم';
+
+  @override
+  String get closeButton => 'إغلاق';
+
+  @override
   String get changeBranch => 'تغيير الفرع';
 
   @override

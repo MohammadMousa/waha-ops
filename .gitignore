@@ -48,3 +48,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Per-environment server settings — real values are local only.
+/config/*.json
+!/config/*.example.json

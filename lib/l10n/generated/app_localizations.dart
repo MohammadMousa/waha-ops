@@ -182,6 +182,42 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get languageMenuLabel;
 
+  /// No description provided for @aboutMenuLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutMenuLabel;
+
+  /// No description provided for @aboutVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get aboutVersionLabel;
+
+  /// No description provided for @aboutBuildLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Build'**
+  String get aboutBuildLabel;
+
+  /// No description provided for @aboutBuiltLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Built'**
+  String get aboutBuiltLabel;
+
+  /// No description provided for @aboutServerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get aboutServerLabel;
+
+  /// No description provided for @closeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeButton;
+
   /// No description provided for @changeBranch.
   ///
   /// In en, this message translates to:

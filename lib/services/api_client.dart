@@ -37,6 +37,37 @@ class ApiClient {
     }
   }
 
+  // Turns a failed login response into the specific exception: locked/
+  // throttled (429, code ACCOUNT_LOCKED or TOO_MANY_REQUESTS), wrong
+  // credentials with tries left (401, code INVALID_CREDENTIALS), or the
+  // plain 401 an older backend shape sends. Field names are snake_case per
+  // the backend contract, read defensively against camelCase too.
+  ApiException _loginFailure(http.Response resp) {
+    final msg = _extractMessage(resp);
+    Map<String, dynamic> body = const {};
+    try {
+      body = jsonDecode(resp.body) as Map<String, dynamic>;
+    } catch (_) {}
+    int? intOf(String a, String b) {
+      final v = body[a] ?? body[b];
+      return v is num ? v.toInt() : null;
+    }
+
+    final code = body['code'];
+    if (code == 'ACCOUNT_LOCKED' || code == 'TOO_MANY_REQUESTS' || resp.statusCode == 429) {
+      return AccountLockedException(resp.statusCode, msg,
+          code: code is String ? code : null,
+          retryAfterSeconds: intOf('retry_after_seconds', 'retryAfterSeconds') ??
+              int.tryParse(resp.headers['retry-after'] ?? ''));
+    }
+    if (resp.statusCode == 401) {
+      return InvalidCredentialsException(401, msg,
+          attemptsRemaining: intOf('attempts_remaining', 'attemptsRemaining'),
+          maxAttempts: intOf('max_attempts', 'maxAttempts'));
+    }
+    return UnknownApiException(resp.statusCode, msg);
+  }
+
   Future<http.Response> _send(Future<http.Response> Function() request) async {
     try {
       return await request();
@@ -80,7 +111,21 @@ class ApiClient {
         body: jsonEncode({'username': username, 'pinCode': pinCode}),
       ),
     );
-    return _okOrThrow(resp, (body) => EmployeeSession.fromJson(body as Map<String, dynamic>));
+    if (resp.statusCode == 200) {
+      return EmployeeSession.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+    }
+    throw _loginFailure(resp);
+  }
+
+  // GET /api/pos/auth/me — validates a cached token without resending the
+  // PIN. Same session fields POST /login returns on 200, minus the token
+  // (the caller already has it). 401 on invalid/expired/revoked.
+  Future<EmployeeSession> me(String token) async {
+    final resp = await _send(
+      () => _http.get(_uri('/api/pos/auth/me'), headers: _headers(token: token)),
+    );
+    return _okOrThrow(
+        resp, (body) => EmployeeSession.fromJson({...body as Map<String, dynamic>, 'token': token}));
   }
 
   // ---- Products (existing endpoint, reused as-is) ---------------------

@@ -30,13 +30,26 @@ picker; the only branch in play is the one already selected.
 | **Operation saved** | **Visit saved** |
 | ![Operation saved](docs/screenshots/operation-saved.jpg) | ![Visit saved](docs/screenshots/visit-saved.jpg) |
 
-## Running [locally]
+## Running locally
+
 ```
-flutter run -d chrome                                          # web
-flutter run -d <device-id> --dart-define=API_BASE_URL=http://<lan-ip>:8081   # physical device
+flutter run -d chrome                                     # web, localhost backend
+flutter run --dart-define-from-file=config/lan.json        # physical device, on the LAN
 ```
 
 `API_BASE_URL` defaults to `http://localhost:8081`, which only resolves
 correctly on the same machine running the backend — a physical device
 needs the dev machine's LAN address instead.
+
+## Building for an environment
+
+The server address is not in the code — it is baked in at build time from a
+per-environment settings file in `config/` (git-ignored; only the
+`*.example.json` templates are committed).
+
+```bash
+cp config/prod.example.json config/prod.json   # then fill in the real values
+scripts/build_release.sh prod                  # bumps version, builds the APK
+flutter run --dart-define-from-file=config/lan.json   # same file works for runs
+```
 

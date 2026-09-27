@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../config/app_config.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../router/routes.dart';
+import '../services/app_info.dart';
 import '../state/app_config_state.dart';
 import '../state/auth_state.dart';
 import '../state/locale_state.dart';
@@ -67,6 +69,11 @@ class AppNavDrawer extends StatelessWidget {
               },
             ),
             ...extraItems,
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: Text(l10n.aboutMenuLabel),
+              onTap: () => _showAboutDialog(context, l10n),
+            ),
             const Spacer(),
             const Divider(height: 1),
             Padding(
@@ -89,6 +96,53 @@ class AppNavDrawer extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context, AppLocalizations l10n) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.aboutMenuLabel),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _AboutRow(l10n.aboutVersionLabel, AppInfo.version),
+            _AboutRow(l10n.aboutBuildLabel, AppInfo.buildNumber),
+            _AboutRow(l10n.aboutBuiltLabel, AppInfo.buildTime),
+            _AboutRow(l10n.aboutServerLabel, AppConfig.apiBaseUrl),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.closeButton),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AboutRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _AboutRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(label, style: const TextStyle(color: Colors.black54)),
+          ),
+          Expanded(child: SelectableText(value)),
+        ],
       ),
     );
   }

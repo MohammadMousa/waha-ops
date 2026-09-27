@@ -1,16 +1,16 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Stores only the session token — never the PIN. AuthState.resolveStartupAuth
+// validates the cached token against GET /api/pos/auth/me instead of
+// resending credentials (human lead's auth rule: a stored token alone
+// should be enough to auto-login, never a stored password/PIN).
 class LocalPrefs {
   static const _tokenKey = 'ops_employee_token';
-  static const _usernameKey = 'ops_employee_username';
-  static const _pinKey = 'ops_employee_pin';
   static const _lastStoreIdKey = 'ops_last_store_id';
 
-  static Future<void> setSession(String token, String username, String pin) async {
+  static Future<void> setToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
-    await prefs.setString(_usernameKey, username);
-    await prefs.setString(_pinKey, pin);
   }
 
   static Future<void> setLastStoreId(int storeId) async {
@@ -21,17 +21,11 @@ class LocalPrefs {
   static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
-    await prefs.remove(_usernameKey);
-    await prefs.remove(_pinKey);
     await prefs.remove(_lastStoreIdKey);
   }
 
   static Future<String?> get token async =>
       (await SharedPreferences.getInstance()).getString(_tokenKey);
-  static Future<String?> get username async =>
-      (await SharedPreferences.getInstance()).getString(_usernameKey);
-  static Future<String?> get pin async =>
-      (await SharedPreferences.getInstance()).getString(_pinKey);
   static Future<int?> get lastStoreId async =>
       (await SharedPreferences.getInstance()).getInt(_lastStoreIdKey);
 }

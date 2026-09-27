@@ -18,6 +18,12 @@
   "dismiss": "إغلاق",
 
   "languageMenuLabel": "اللغة",
+  "aboutMenuLabel": "حول التطبيق",
+  "aboutVersionLabel": "الإصدار",
+  "aboutBuildLabel": "رقم البناء",
+  "aboutBuiltLabel": "تاريخ البناء",
+  "aboutServerLabel": "الخادم",
+  "closeButton": "إغلاق",
   "changeBranch": "تغيير الفرع",
   "selectDestinationBranch": "اختر فرع الوجهة",
   "selectTransferSourceBranch": "من أي فرع سيتم النقل؟",

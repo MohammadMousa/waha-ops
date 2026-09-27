@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/branch.dart';
+import '../models/employee_session.dart';
 import '../services/api_client.dart';
 import '../services/local_prefs.dart';
 
@@ -30,6 +31,12 @@ class AuthState extends ChangeNotifier {
 
   Future<void> login(ApiClient api, String username, String pin) async {
     final session = await api.login(username, pin);
+    _applySession(session, username: username);
+    await LocalPrefs.setToken(session.token);
+    notifyListeners();
+  }
+
+  void _applySession(EmployeeSession session, {String? username}) {
     token = session.token;
     employeeId = session.employeeId;
     organizationId = session.organizationId;
@@ -42,8 +49,6 @@ class AuthState extends ChangeNotifier {
     stores = session.stores;
     permissions = session.permissions;
     storeId = null;
-    await LocalPrefs.setSession(session.token, username, pin);
-    notifyListeners();
   }
 
   // Local-only pick — POST /api/pos/auth/store no longer exists (see
@@ -57,19 +62,18 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // No employee-session equivalent of GET /api/auth/me exists yet (see
-  // KioskAuthController precedent — device sessions re-login on every
-  // launch rather than validating a cached token). Mirrors that here.
+  // Validates the cached token against GET /api/pos/auth/me — never resends
+  // the PIN, and the PIN itself is never persisted (only the token is).
   //
   // Deliberately does NOT auto-pick a store or resume a visit — a reload
   // must always land back on the store-select screen, never silently
   // jump into a branch + started visit (human lead, 2026-09-08).
   Future<bool> resolveStartupAuth(ApiClient api) async {
-    final username = await LocalPrefs.username;
-    final pin = await LocalPrefs.pin;
-    if (username == null || pin == null) return false;
+    final cachedToken = await LocalPrefs.token;
+    if (cachedToken == null) return false;
     try {
-      await login(api, username, pin);
+      final session = await api.me(cachedToken);
+      _applySession(session);
     } catch (_) {
       await LocalPrefs.clear();
       return false;

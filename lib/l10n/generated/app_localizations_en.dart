@@ -52,6 +52,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageMenuLabel => 'Language';
 
   @override
+  String get aboutMenuLabel => 'About';
+
+  @override
+  String get aboutVersionLabel => 'Version';
+
+  @override
+  String get aboutBuildLabel => 'Build';
+
+  @override
+  String get aboutBuiltLabel => 'Built';
+
+  @override
+  String get aboutServerLabel => 'Server';
+
+  @override
+  String get closeButton => 'Close';
+
+  @override
   String get changeBranch => 'Change Branch';
 
   @override
