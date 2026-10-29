@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _username = TextEditingController();
   final _pin = TextEditingController();
   bool _loading = false;
+  bool _showPin = false;
   String? _error;
 
   // Lockout: while > 0 the form is disabled and the banner ticks down.
@@ -140,8 +141,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _pin,
                     enabled: !disabled,
-                    decoration: InputDecoration(labelText: l10n.pinLabel, counterText: ''),
-                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.pinLabel,
+                      counterText: '',
+                      suffixIcon: IconButton(
+                        icon: Icon(_showPin ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setState(() => _showPin = !_showPin),
+                      ),
+                    ),
+                    obscureText: !_showPin,
                     keyboardType: TextInputType.number,
                     // Backend moved employee PINs to 6 digits; existing
                     // accounts keep their old 4-digit PIN until reset (see

@@ -12,16 +12,21 @@ import '../services/api_client.dart';
 class AppConfigState extends ChangeNotifier {
   Map<String, dynamic>? _appName;
 
+  int _apiLevel = 0;
+
+  // Backend feature level from GET /api/config; 0 until loaded or when the
+  // backend predates the field. Account sessions need 3.
+  bool get supportsAccountSessions => _apiLevel >= 3;
+
   String? title(String languageCode) =>
       _appName?[languageCode] as String? ?? _appName?['en'] as String?;
 
   Future<void> load(ApiClient api) async {
     try {
-      final appName = await api.getAppName();
-      if (appName != null) {
-        _appName = appName;
-        notifyListeners();
-      }
+      final config = await api.getConfig();
+      _apiLevel = int.tryParse('${config['api_level']}') ?? 0;
+      _appName = config['appName'] as Map<String, dynamic>?;
+      notifyListeners();
     } catch (_) {
       // Callers fall back to the hardcoded l10n appTitle string.
     }

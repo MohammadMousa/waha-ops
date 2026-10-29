@@ -42,6 +42,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logOut => 'Log out';
 
   @override
+  String get sessionEndedMessage =>
+      'Your session has ended. Please sign in again.';
+
+  @override
+  String get activeSessionsTitle => 'Active sessions';
+
+  @override
+  String get thisDevice => 'This device';
+
+  @override
+  String get signOutOtherDevices => 'Sign out other devices';
+
+  @override
+  String get signOutOthersConfirmBody =>
+      'All your other devices will be signed out.';
+
+  @override
+  String get signOutDevice => 'Sign out';
+
+  @override
+  String get noOtherSessions => 'No other devices are signed in.';
+
+  @override
+  String get lastActive => 'Last active';
+
+  @override
+  String get unknownDevice => 'Unknown device';
+
+  @override
+  String get signedOutOthersMessage => 'Other devices signed out.';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
   String get noInventoryPermissionMessage =>
       'This account doesn\'t have inventory access.';
 

@@ -86,7 +86,21 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> logout() async {
+  // Ends the session on the server first so the backend drops it, then clears
+  // local state. A failed server call (offline) must not trap the employee in
+  // the app, so local sign-out happens regardless.
+  Future<void> logout(ApiClient api) async {
+    final t = token;
+    if (t != null) {
+      try {
+        await api.logout(t);
+      } catch (_) {}
+    }
+    await clearSession();
+  }
+
+  // Local-only sign-out, for when the server already ended the session.
+  Future<void> clearSession() async {
     token = null;
     employeeId = null;
     organizationId = null;

@@ -43,6 +43,39 @@ class AppLocalizationsAr extends AppLocalizations {
   String get logOut => 'تسجيل الخروج';
 
   @override
+  String get sessionEndedMessage => 'انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.';
+
+  @override
+  String get activeSessionsTitle => 'الجلسات النشطة';
+
+  @override
+  String get thisDevice => 'هذا الجهاز';
+
+  @override
+  String get signOutOtherDevices => 'تسجيل الخروج من الأجهزة الأخرى';
+
+  @override
+  String get signOutOthersConfirmBody => 'سيتم تسجيل خروج جميع أجهزتك الأخرى.';
+
+  @override
+  String get signOutDevice => 'تسجيل الخروج';
+
+  @override
+  String get noOtherSessions => 'لا توجد أجهزة أخرى مسجلة الدخول.';
+
+  @override
+  String get lastActive => 'آخر نشاط';
+
+  @override
+  String get unknownDevice => 'جهاز غير معروف';
+
+  @override
+  String get signedOutOthersMessage => 'تم تسجيل الخروج من الأجهزة الأخرى.';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
   String get noInventoryPermissionMessage =>
       'لا يملك هذا الحساب صلاحية الوصول للمخزون.';
 

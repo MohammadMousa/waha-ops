@@ -6,6 +6,7 @@ import '../l10n/generated/app_localizations.dart';
 import '../router/routes.dart';
 import '../services/app_info.dart';
 import '../state/app_config_state.dart';
+import '../services/api_client.dart';
 import '../state/auth_state.dart';
 import '../state/locale_state.dart';
 
@@ -68,6 +69,15 @@ class AppNavDrawer extends StatelessWidget {
                 Navigator.of(context).pop();
               },
             ),
+            if (appConfig.supportsAccountSessions)
+              ListTile(
+                leading: const Icon(Icons.devices),
+                title: Text(l10n.activeSessionsTitle),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushNamed(Routes.sessions);
+                },
+              ),
             ...extraItems,
             ListTile(
               leading: const Icon(Icons.info_outline),
@@ -86,8 +96,10 @@ class AppNavDrawer extends StatelessWidget {
                 icon: const Icon(Icons.power_settings_new),
                 label: Text(l10n.logOut),
                 onPressed: () async {
+                  final auth = context.read<AuthState>();
+                  final api = context.read<ApiClient>();
                   Navigator.of(context).pop();
-                  await context.read<AuthState>().logout();
+                  await auth.logout(api);
                   if (context.mounted) {
                     Navigator.of(context).pushNamedAndRemoveUntil(Routes.login, (_) => false);
                   }

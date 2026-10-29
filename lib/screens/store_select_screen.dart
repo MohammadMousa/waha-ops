@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../models/branch.dart';
 import '../router/routes.dart';
+import '../services/api_client.dart';
 import '../state/auth_state.dart';
 import '../state/locale_state.dart';
 import '../widgets/app_nav_drawer.dart';
@@ -30,7 +31,7 @@ class StoreSelectScreen extends StatelessWidget {
   }
 
   Future<void> _logout(BuildContext context) async {
-    await context.read<AuthState>().logout();
+    await context.read<AuthState>().logout(context.read<ApiClient>());
     if (context.mounted) Navigator.of(context).pushReplacementNamed(Routes.login);
   }
 

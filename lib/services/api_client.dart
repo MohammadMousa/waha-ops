@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
+import '../models/account_session.dart';
+import 'app_info.dart';
+import 'device_info.dart';
 import '../models/category.dart';
 import '../models/employee_session.dart';
 import '../models/product_lite.dart';
@@ -19,6 +22,12 @@ class VisitStart {
 class ApiClient {
   final http.Client _http;
   ApiClient({http.Client? httpClient}) : _http = httpClient ?? http.Client();
+
+  // Called when a call made with a token comes back 401: the server ended
+  // this session (signed out elsewhere, session cap, PIN change, disabled
+  // account). Tokens never expire, so this is the only way a session ends
+  // behind the app's back. Set once at startup (see main.dart).
+  void Function()? onSessionEnded;
 
   Uri _uri(String path) => Uri.parse('${AppConfig.apiBaseUrl}$path');
 
@@ -80,6 +89,7 @@ class ApiClient {
     if (resp.statusCode == 200) return onOk(resp.body.isEmpty ? null : jsonDecode(resp.body));
     final msg = _extractMessage(resp);
     if (resp.statusCode == 401 || resp.statusCode == 403) {
+      if (resp.statusCode == 401) onSessionEnded?.call();
       throw UnauthorizedException(resp.statusCode, msg);
     }
     throw UnknownApiException(resp.statusCode, msg);
@@ -100,6 +110,14 @@ class ApiClient {
         resp, (body) => (body as Map<String, dynamic>)['appName'] as Map<String, dynamic>?);
   }
 
+  // GET /api/config?orgId= whole map (no auth). Holds api_level as a string.
+  Future<Map<String, dynamic>> getConfig({int orgId = AppConfig.defaultOrganizationId}) async {
+    final resp = await _send(
+      () => _http.get(_uri('/api/config').replace(queryParameters: {'orgId': '$orgId'})),
+    );
+    return _okOrThrow(resp, (body) => body as Map<String, dynamic>);
+  }
+
   // ---- Auth ----------------------------------------------------------
 
   // POST /api/pos/auth/login  { username, pinCode }
@@ -108,7 +126,15 @@ class ApiClient {
       () => _http.post(
         _uri('/api/pos/auth/login'),
         headers: _headers(),
-        body: jsonEncode({'username': username, 'pinCode': pinCode}),
+        body: jsonEncode({
+          'username': username,
+          'pinCode': pinCode,
+          // Version part only (no build number), same as the kiosk's login.
+          'appVersion': AppInfo.version,
+          // Shown in the session list so an admin can tell devices apart.
+          // Backends before api_level 3 ignore it.
+          'sessionProperties': DeviceInfo.properties,
+        }),
       ),
     );
     if (resp.statusCode == 200) {
@@ -126,6 +152,49 @@ class ApiClient {
     );
     return _okOrThrow(
         resp, (body) => EmployeeSession.fromJson({...body as Map<String, dynamic>, 'token': token}));
+  }
+
+  // POST /api/pos/auth/logout — ends this session on the server. Answers 200
+  // even for an unknown token, so any failure here is network-only; callers
+  // log out locally regardless.
+  Future<void> logout(String token) async {
+    await _send(
+      () => _http
+          .post(_uri('/api/pos/auth/logout'), headers: _headers(token: token))
+          .timeout(const Duration(seconds: 5)),
+    );
+  }
+
+  // ---- Own sessions (api_level 3) --------------------------------------
+
+  // GET /api/auth/me/sessions -> { items: [...] }, newest activity first.
+  Future<List<AccountSession>> mySessions(String token) async {
+    final resp = await _send(
+      () => _http.get(_uri('/api/auth/me/sessions'), headers: _headers(token: token)),
+    );
+    return _okOrThrow(
+        resp,
+        (body) => ((body as Map<String, dynamic>)['items'] as List)
+            .map((e) => AccountSession.fromJson(e as Map<String, dynamic>))
+            .toList());
+  }
+
+  // DELETE /api/auth/me/sessions/{ref} — ends one other session.
+  Future<void> signOutSession(String token, String ref) async {
+    final resp = await _send(
+      () => _http.delete(_uri('/api/auth/me/sessions/${Uri.encodeComponent(ref)}'),
+          headers: _headers(token: token)),
+    );
+    _okOrThrow(resp, (_) => null);
+  }
+
+  // POST /api/auth/me/sessions/sign-out-others -> { signedOut: n }.
+  Future<int> signOutOthers(String token) async {
+    final resp = await _send(
+      () => _http.post(_uri('/api/auth/me/sessions/sign-out-others'),
+          headers: _headers(token: token)),
+    );
+    return _okOrThrow(resp, (body) => ((body as Map<String, dynamic>)['signedOut'] as num).toInt());
   }
 
   // ---- Products (existing endpoint, reused as-is) ---------------------

@@ -27,6 +27,11 @@ if [ ! -f "$cfg" ]; then
   exit 1
 fi
 
+if [ ! -f android/key.properties ]; then
+  echo "Missing android/key.properties — copy android/key.properties.example, fill it in and put the release keystore in android/keystore/. Refusing to build with the debug key." >&2
+  exit 1
+fi
+
 python3 tool/bump_version.py
 flutter build apk --release --dart-define-from-file="$cfg" \
   --dart-define=BUILD_TIME="$(date '+%Y-%m-%d %H:%M %Z')" "$@"

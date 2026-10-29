@@ -8,7 +8,9 @@ import 'screens/login_screen.dart';
 import 'screens/store_select_screen.dart';
 import 'screens/visit_home_screen.dart';
 import 'services/api_client.dart';
+import 'screens/sessions_screen.dart';
 import 'services/app_info.dart';
+import 'services/device_info.dart';
 import 'state/app_config_state.dart';
 import 'state/auth_state.dart';
 import 'state/locale_state.dart';
@@ -19,8 +21,12 @@ void main() async {
   // included) pre-runApp.
   WidgetsFlutterBinding.ensureInitialized();
   await AppInfo.init();
+  await DeviceInfo.init();
   runApp(const WahaOpsApp());
 }
+
+final _navigatorKey = GlobalKey<NavigatorState>();
+final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class WahaOpsApp extends StatelessWidget {
   const WahaOpsApp({super.key});
@@ -29,8 +35,11 @@ class WahaOpsApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<ApiClient>(create: (_) => ApiClient()),
         ChangeNotifierProvider(create: (_) => AuthState()),
+        Provider<ApiClient>(create: (ctx) {
+          final auth = ctx.read<AuthState>();
+          return ApiClient()..onSessionEnded = () => _handleSessionEnded(auth);
+        }),
         ChangeNotifierProvider(create: (_) => VisitState()),
         ChangeNotifierProvider(create: (_) => LocaleState()..load()),
         // Fetched once at boot, before login — see AppConfigState's doc.
@@ -38,6 +47,8 @@ class WahaOpsApp extends StatelessWidget {
       ],
       child: Consumer2<LocaleState, AppConfigState>(
         builder: (context, localeState, appConfig, _) => MaterialApp(
+          navigatorKey: _navigatorKey,
+          scaffoldMessengerKey: _messengerKey,
           onGenerateTitle: (context) =>
               appConfig.title(localeState.locale.languageCode) ??
               AppLocalizations.of(context)!.appTitle,
@@ -67,6 +78,8 @@ class WahaOpsApp extends StatelessWidget {
                 return MaterialPageRoute(builder: (_) => const LoginScreen());
               case Routes.storeSelect:
                 return MaterialPageRoute(builder: (_) => const StoreSelectScreen());
+              case Routes.sessions:
+                return MaterialPageRoute(builder: (_) => const SessionsScreen());
               case Routes.visitHome:
                 return MaterialPageRoute(builder: (_) => const VisitHomeScreen());
               default:
@@ -76,6 +89,22 @@ class WahaOpsApp extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// The server ended this session (signed out elsewhere, session cap, PIN
+// change, disabled account) — back to the PIN login with a short notice. Does
+// nothing when nobody is signed in (e.g. the startup token check).
+Future<void> _handleSessionEnded(AuthState auth) async {
+  if (!auth.isLoggedIn) return;
+  await auth.clearSession();
+  final nav = _navigatorKey.currentState;
+  if (nav == null) return;
+  nav.pushNamedAndRemoveUntil(Routes.login, (_) => false);
+  final ctx = _navigatorKey.currentContext;
+  if (ctx != null && ctx.mounted) {
+    _messengerKey.currentState
+        ?.showSnackBar(SnackBar(content: Text(AppLocalizations.of(ctx)!.sessionEndedMessage)));
   }
 }
 

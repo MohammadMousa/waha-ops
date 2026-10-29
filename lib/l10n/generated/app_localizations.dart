@@ -164,6 +164,72 @@ abstract class AppLocalizations {
   /// **'Log out'**
   String get logOut;
 
+  /// No description provided for @sessionEndedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has ended. Please sign in again.'**
+  String get sessionEndedMessage;
+
+  /// No description provided for @activeSessionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active sessions'**
+  String get activeSessionsTitle;
+
+  /// No description provided for @thisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get thisDevice;
+
+  /// No description provided for @signOutOtherDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out other devices'**
+  String get signOutOtherDevices;
+
+  /// No description provided for @signOutOthersConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All your other devices will be signed out.'**
+  String get signOutOthersConfirmBody;
+
+  /// No description provided for @signOutDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOutDevice;
+
+  /// No description provided for @noOtherSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No other devices are signed in.'**
+  String get noOtherSessions;
+
+  /// No description provided for @lastActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Last active'**
+  String get lastActive;
+
+  /// No description provided for @unknownDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown device'**
+  String get unknownDevice;
+
+  /// No description provided for @signedOutOthersMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Other devices signed out.'**
+  String get signedOutOthersMessage;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
   /// No description provided for @noInventoryPermissionMessage.
   ///
   /// In en, this message translates to:
