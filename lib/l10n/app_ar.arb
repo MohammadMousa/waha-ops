@@ -15,6 +15,7 @@
   "backToLogin": "العودة لتسجيل الدخول",
   "logOut": "تسجيل الخروج",
   "sessionEndedMessage": "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+  "finishCurrentProductFirst": "احفظ المنتج الحالي أو أغلقه قبل مسح منتج آخر.",
   "activeSessionsTitle": "الجلسات النشطة",
   "thisDevice": "هذا الجهاز",
   "signOutOtherDevices": "تسجيل الخروج من الأجهزة الأخرى",

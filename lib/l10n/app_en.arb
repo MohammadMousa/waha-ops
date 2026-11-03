@@ -15,6 +15,7 @@
   "backToLogin": "Back to login",
   "logOut": "Log out",
   "sessionEndedMessage": "Your session has ended. Please sign in again.",
+  "finishCurrentProductFirst": "Save or close the current product before scanning another.",
   "activeSessionsTitle": "Active sessions",
   "thisDevice": "This device",
   "signOutOtherDevices": "Sign out other devices",

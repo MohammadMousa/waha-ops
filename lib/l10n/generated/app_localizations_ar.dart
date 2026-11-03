@@ -46,6 +46,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sessionEndedMessage => 'انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.';
 
   @override
+  String get finishCurrentProductFirst =>
+      'احفظ المنتج الحالي أو أغلقه قبل مسح منتج آخر.';
+
+  @override
   String get activeSessionsTitle => 'الجلسات النشطة';
 
   @override

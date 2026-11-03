@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'Your session has ended. Please sign in again.'**
   String get sessionEndedMessage;
 
+  /// No description provided for @finishCurrentProductFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or close the current product before scanning another.'**
+  String get finishCurrentProductFirst;
+
   /// No description provided for @activeSessionsTitle.
   ///
   /// In en, this message translates to:

@@ -46,6 +46,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your session has ended. Please sign in again.';
 
   @override
+  String get finishCurrentProductFirst =>
+      'Save or close the current product before scanning another.';
+
+  @override
   String get activeSessionsTitle => 'Active sessions';
 
   @override

@@ -12,6 +12,7 @@ import '../models/visit_operation.dart';
 import '../router/routes.dart';
 import '../services/api_client.dart';
 import '../services/api_exceptions.dart';
+import '../services/scan_sound_service.dart';
 import '../state/app_config_state.dart';
 import '../state/auth_state.dart';
 import '../state/locale_state.dart';
@@ -66,6 +67,8 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
   Map<int, int>? _stock; // productId -> quantity; null while unavailable
   List<Category> _categories = [];
   final List<OperationItem> _staged = [];
+  final _sheet = ProductSheetController(); // the open product sheet, if any
+  bool _lookingUp = false; // a scan is still being identified
 
   // Background hardware-scanner capture — a keyboard-wedge scanner (or a
   // rugged device's built-in scan trigger, which behaves the same way)
@@ -185,31 +188,80 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
     final l10n = AppLocalizations.of(context)!;
     final api = context.read<ApiClient>();
     final auth = context.read<AuthState>();
+
+    // One product at a time: a scan never opens a second sheet, and never
+    // replaces a sheet that holds unsaved work (a product not added yet, or a
+    // changed quantity). A burst of scans arriving before the first product
+    // is identified is refused the same way.
+    if (isDefiniteScan && (_lookingUp || (_sheet.isOpen && _sheet.isDirty))) {
+      _scanFailed(l10n.finishCurrentProductFirst);
+      return;
+    }
+
+    ProductLite? product;
+    _lookingUp = true;
     try {
-      final product = await api.getProductByBarcode(code, token: auth.token!, storeId: widget.storeId);
-      if (!mounted) return;
-      await _pickProduct(product);
+      product = await api.getProductByBarcode(code, token: auth.token!, storeId: widget.storeId);
     } on ProductNotFoundException catch (e) {
-      if (!mounted) return;
-      if (isDefiniteScan) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
-      }
-      // Else: not a barcode — leave the already-running text search results as-is.
+      // A miss on typed text is ambiguous (could be a partial name), so only
+      // a definite scan reports it.
+      if (mounted && isDefiniteScan) _scanFailed(e.message);
     } on ProductNotSellableException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
-      }
+      if (mounted) _scanFailed(e.message);
     } on ApiException catch (e) {
-      if (mounted && isDefiniteScan) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
-      }
+      if (mounted && isDefiniteScan) _scanFailed(e.message);
     } catch (_) {
-      if (mounted && isDefiniteScan) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.couldNotReachServer)));
-      }
+      if (mounted && isDefiniteScan) _scanFailed(l10n.couldNotReachServer);
       // Else: network/other — text search results remain the fallback.
+    } finally {
+      _lookingUp = false;
+    }
+    if (product == null || !mounted) return;
+    await _acceptScan(product, isDefiniteScan: isDefiniteScan);
+  }
+
+  // Failure sound plus the message — inside the open sheet when there is one
+  // (a snackbar would sit behind it), otherwise as a snackbar.
+  void _scanFailed(String message) {
+    ScanSoundService.playFailure();
+    if (_sheet.isOpen) {
+      _sheet.showError(message);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
+
+  Future<void> _acceptScan(ProductLite product, {required bool isDefiniteScan}) async {
+    if (!_sheet.isOpen) {
+      if (isDefiniteScan) ScanSoundService.playSuccess();
+      await _pickProduct(product);
+      return;
+    }
+    // A sheet is open. Work typed into it while this scan was being looked up
+    // still counts as unsaved.
+    if (_sheet.isDirty) {
+      _scanFailed(AppLocalizations.of(context)!.finishCurrentProductFirst);
+      return;
+    }
+    ScanSoundService.playSuccess();
+    if (_sheet.productId == product.id) {
+      _sheet.flash(ok: true);
+      return;
+    }
+    // Untouched sheet, different product: show that product instead.
+    final stagedIndex = _staged.indexWhere((i) => i.productId == product.id);
+    _sheet.swapProduct(
+      product,
+      _stockFor(product),
+      stagedIndex == -1 ? null : _staged[stagedIndex].quantity,
+    );
+    _sheet.flash(ok: true);
+  }
+
+  // null only means the stock fetch itself never succeeded (backend down,
+  // endpoint missing) — a successful fetch with no entry for this product
+  // means zero on hand, not "unknown", so it still gets a real number.
+  int? _stockFor(ProductLite product) => _stock == null ? null : (_stock![product.id] ?? 0);
 
   Future<void> _scanWithCamera() async {
     final code = await Navigator.of(context).push<String>(
@@ -221,33 +273,33 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
 
   Future<void> _pickProduct(ProductLite product) async {
     final lang = context.read<LocaleState>().locale.languageCode;
-    // null only means the stock fetch itself never succeeded (backend down,
-    // endpoint missing) — a successful fetch with no entry for this product
-    // means zero on hand, not "unknown", so it still gets a real number.
-    final branchStock = _stock == null ? null : (_stock![product.id] ?? 0);
     // Already staged? Re-open on its existing quantity so this edits that
     // row instead of adding a duplicate one for the same product.
-    final existingIndex = _staged.indexWhere((i) => i.productId == product.id);
-    final qty = await showProductQuantitySheet(
+    final stagedIndex = _staged.indexWhere((i) => i.productId == product.id);
+    final result = await showProductQuantitySheet(
       context,
       product: product,
-      branchStock: branchStock,
+      branchStock: _stockFor(product),
       type: widget.type,
-      initialQuantity: existingIndex == -1 ? null : _staged[existingIndex].quantity,
+      initialQuantity: stagedIndex == -1 ? null : _staged[stagedIndex].quantity,
+      controller: _sheet,
     );
-    if (qty == null) return;
+    if (result == null || !mounted) return;
     setState(() {
       final item = OperationItem(
-        productId: product.id,
-        productLabel: product.label(lang),
-        quantity: qty,
-        branchStock: branchStock,
-        imageResourceId: product.imageResourceId,
+        productId: result.product.id,
+        productLabel: result.product.label(lang),
+        quantity: result.quantity,
+        branchStock: result.branchStock,
+        imageResourceId: result.product.imageResourceId,
       );
-      if (existingIndex == -1) {
+      // Looked up again now: the sheet may have been swapped to another
+      // product while open, and one product must never become two rows.
+      final index = _staged.indexWhere((i) => i.productId == result.product.id);
+      if (index == -1) {
         _staged.add(item);
       } else {
-        _staged[existingIndex] = item;
+        _staged[index] = item;
       }
       _searchResults = null;
       _search.clear();

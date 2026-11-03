@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,7 +21,7 @@ import '../state/locale_state.dart';
 // company → branch, so it replenishes the origin branch; return is branch
 // → company, so it drains it — confirmed with the human lead, 2026-09-08,
 // opposite of what was first assumed here).
-Future<int?> showProductQuantitySheet(
+Future<ProductSheetResult?> showProductQuantitySheet(
   BuildContext context, {
   required ProductLite product,
   required int? branchStock, // null while unknown/unavailable
@@ -30,8 +32,12 @@ Future<int?> showProductQuantitySheet(
   // 2026-09-09: scanning/picking the same item twice must edit, not
   // duplicate).
   int? initialQuantity,
+  // Lets the caller see whether the open sheet holds unsaved work, flash it,
+  // show a message in it, or swap the product it shows (see
+  // ProductSheetController).
+  ProductSheetController? controller,
 }) {
-  return showModalBottomSheet<int>(
+  return showModalBottomSheet<ProductSheetResult>(
     context: context,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
@@ -42,8 +48,46 @@ Future<int?> showProductQuantitySheet(
       branchStock: branchStock,
       type: type,
       initialQuantity: initialQuantity ?? 1,
+      isNew: initialQuantity == null,
+      controller: controller,
     ),
   );
+}
+
+/// What the sheet hands back on Add. The product is part of the result
+/// because a scan can swap the sheet to another product while it is open.
+class ProductSheetResult {
+  final ProductLite product;
+  final int? branchStock;
+  final int quantity;
+  const ProductSheetResult({
+    required this.product,
+    required this.branchStock,
+    required this.quantity,
+  });
+}
+
+/// A handle on the open product sheet, for scans that arrive while it is up.
+class ProductSheetController {
+  _ProductQuantitySheetState? _state;
+
+  bool get isOpen => _state != null;
+  int? get productId => _state?._product.id;
+
+  /// True while the sheet holds work that isn't saved yet: a product that
+  /// isn't in the list, or a quantity that was changed.
+  bool get isDirty => _state?._isDirty ?? false;
+
+  /// Briefly tints the sheet green (ok) or red (not ok).
+  void flash({required bool ok}) => _state?._flash(ok);
+
+  /// Shows a red message inside the sheet and flashes it red.
+  void showError(String message) => _state?._showError(message);
+
+  /// Replaces the product shown. [initialQuantity] is non-null when the new
+  /// product is already in the list.
+  void swapProduct(ProductLite product, int? branchStock, int? initialQuantity) =>
+      _state?._swap(product, branchStock, initialQuantity);
 }
 
 class ProductQuantitySheet extends StatefulWidget {
@@ -51,12 +95,16 @@ class ProductQuantitySheet extends StatefulWidget {
   final int? branchStock;
   final OperationType type;
   final int initialQuantity;
+  final bool isNew; // product isn't in the list yet
+  final ProductSheetController? controller;
   const ProductQuantitySheet({
     super.key,
     required this.product,
     required this.branchStock,
     required this.type,
     this.initialQuantity = 1,
+    this.isNew = false,
+    this.controller,
   });
 
   @override
@@ -65,19 +113,57 @@ class ProductQuantitySheet extends StatefulWidget {
 
 class _ProductQuantitySheetState extends State<ProductQuantitySheet> {
   late final _qty = TextEditingController(text: '${widget.initialQuantity}');
+  late ProductLite _product = widget.product;
+  late int? _branchStock = widget.branchStock;
+  late int _initialQuantity = widget.initialQuantity;
+  late bool _isNew = widget.isNew;
   String? _error;
+  Color? _flashColor;
+  Timer? _flashTimer;
 
-  String? get _imageUrl => AppConfig.resourceUrl(widget.product.imageResourceId);
+  bool get _isDirty => _isNew || _enteredQty != _initialQuantity;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller?._state = this;
+  }
+
+  void _flash(bool ok) {
+    _flashTimer?.cancel();
+    setState(() => _flashColor = ok ? Colors.green.shade100 : Colors.red.shade100);
+    _flashTimer = Timer(const Duration(milliseconds: 450), () {
+      if (mounted) setState(() => _flashColor = null);
+    });
+  }
+
+  void _showError(String message) {
+    setState(() => _error = message);
+    _flash(false);
+  }
+
+  void _swap(ProductLite product, int? branchStock, int? initialQuantity) {
+    setState(() {
+      _product = product;
+      _branchStock = branchStock;
+      _initialQuantity = initialQuantity ?? 1;
+      _isNew = initialQuantity == null;
+      _qty.text = '$_initialQuantity';
+      _error = null;
+    });
+  }
+
+  String? get _imageUrl => AppConfig.resourceUrl(_product.imageResourceId);
 
   int get _enteredQty => int.tryParse(_qty.text.trim()) ?? 0;
 
   // Transfer replenishes the origin branch (company → branch); return
   // drains it (branch → company).
   int? get _endingInventory {
-    if (widget.branchStock == null) return null;
+    if (_branchStock == null) return null;
     return widget.type == OperationType.transfer
-        ? widget.branchStock! + _enteredQty
-        : widget.branchStock! - _enteredQty;
+        ? _branchStock! + _enteredQty
+        : _branchStock! - _enteredQty;
   }
 
   void _adjust(int delta) {
@@ -96,11 +182,15 @@ class _ProductQuantitySheetState extends State<ProductQuantitySheet> {
       setState(() => _error = l10n.enterValidQuantity);
       return;
     }
-    Navigator.of(context).pop(qty);
+    Navigator.of(
+      context,
+    ).pop(ProductSheetResult(product: _product, branchStock: _branchStock, quantity: qty));
   }
 
   @override
   void dispose() {
+    if (widget.controller?._state == this) widget.controller!._state = null;
+    _flashTimer?.cancel();
     _qty.dispose();
     super.dispose();
   }
@@ -110,156 +200,188 @@ class _ProductQuantitySheetState extends State<ProductQuantitySheet> {
     final l10n = AppLocalizations.of(context)!;
     final lang = context.watch<LocaleState>().locale.languageCode;
     final primary = Theme.of(context).colorScheme.primary;
-    final title =
-        widget.type == OperationType.transfer ? l10n.productTransferTitle : l10n.productReturnTitle;
+    final title = widget.type == OperationType.transfer
+        ? l10n.productTransferTitle
+        : l10n.productReturnTitle;
     final ending = _endingInventory;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          // The keyboard eats a big chunk of a phone's screen height — this
-          // content doesn't fit anymore once it's up, so it must scroll
-          // instead of overflowing (Flutter's debug-mode yellow/black
-          // stripes were showing through it, human lead, 2026-09-09).
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        color: _flashColor ?? Colors.transparent,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              // The keyboard eats a big chunk of a phone's screen height — this
+              // content doesn't fit anymore once it's up, so it must scroll
+              // instead of overflowing (Flutter's debug-mode yellow/black
+              // stripes were showing through it, human lead, 2026-09-09).
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 120,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: _imageUrl == null
-                    ? const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.black26)
-                    : Image.network(
-                        _imageUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.black26),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
-              ),
-              const SizedBox(height: 16),
-              Text(widget.product.label(lang),
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 2),
-              Text(widget.product.barcode, style: const TextStyle(color: Colors.black54, fontSize: 13)),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(l10n.branchStockLabel,
-                        style: const TextStyle(color: Colors.black54, fontSize: 13)),
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
-                        children: [
-                          TextSpan(text: widget.branchStock?.toString() ?? '—'),
-                          TextSpan(
-                            text: '  ${l10n.unitsSuffix}',
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.normal, color: Colors.black54),
+                      Expanded(
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 120,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: _imageUrl == null
+                        ? const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.black26)
+                        : Image.network(
+                            _imageUrl!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.inventory_2_outlined,
+                              size: 48,
+                              color: Colors.black26,
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(l10n.quantityLabel, style: const TextStyle(color: Colors.black54, fontSize: 13)),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  _StepperButton(icon: Icons.remove, onTap: () => _adjust(-1)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: _qty,
-                      // No autofocus — the stepper +/- buttons are the
-                      // primary way this gets used, popping the keyboard
-                      // open on every scan/tap was just in the way (human
-                      // lead, 2026-09-09).
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                      decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
-                      keyboardType: TextInputType.number,
-                      onChanged: (_) => setState(() => _error = null),
-                      onSubmitted: (_) => _confirm(),
-                    ),
                   ),
-                  const SizedBox(width: 12),
-                  _StepperButton(icon: Icons.add, onTap: () => _adjust(1)),
-                ],
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
-              ],
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(l10n.endingInventoryLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                  const SizedBox(height: 16),
                   Text(
-                    ending != null ? '$ending ${l10n.unitsSuffix}' : '—',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primary),
+                    _product.label(lang),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.red.shade700,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(l10n.cancel),
+                  const SizedBox(height: 2),
+                  Text(
+                    _product.barcode,
+                    style: const TextStyle(color: Colors.black54, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          l10n.branchStockLabel,
+                          style: const TextStyle(color: Colors.black54, fontSize: 13),
+                        ),
+                        RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            children: [
+                              TextSpan(text: _branchStock?.toString() ?? '—'),
+                              TextSpan(
+                                text: '  ${l10n.unitsSuffix}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.normal,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(onPressed: _confirm, child: Text(l10n.addButton)),
+                  const SizedBox(height: 20),
+                  Text(
+                    l10n.quantityLabel,
+                    style: const TextStyle(color: Colors.black54, fontSize: 13),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      _StepperButton(icon: Icons.remove, onTap: () => _adjust(-1)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _qty,
+                          // No autofocus — the stepper +/- buttons are the
+                          // primary way this gets used, popping the keyboard
+                          // open on every scan/tap was just in the way (human
+                          // lead, 2026-09-09).
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setState(() => _error = null),
+                          onSubmitted: (_) => _confirm(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _StepperButton(icon: Icons.add, onTap: () => _adjust(1)),
+                    ],
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                  ],
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.endingInventoryLabel,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                      ),
+                      Text(
+                        ending != null ? '$ending ${l10n.unitsSuffix}' : '—',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.red.shade700,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(l10n.cancel),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(onPressed: _confirm, child: Text(l10n.addButton)),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
